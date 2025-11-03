@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard - Richfield Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-green-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://cdn.briefly.co.za/images/720/6b4cbb0e53c53f0a.jpeg?v=1" alt="Logo" class="w-12 h-12 rounded">
+                <div>
+                    <h1 class="text-2xl font-bold">Student Dashboard</h1>
+                    <p class="text-green-200">Richfield Library Management System</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="studentName" class="font-semibold">Loading...</span>
+                <button onclick="manage2FA()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition">🔒 2FA</button>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Student Info -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">My Information</h2>
+            <div id="studentInfo" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Student info will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b">
+                <nav class="flex -mb-px">
+                    <button onclick="showTab('dashboard')" class="tab-button py-3 px-4 border-b-2 font-medium text-sm border-green-500 text-green-600" data-tab="dashboard">Dashboard</button>
+                    <button onclick="showTab('notifications')" class="tab-button py-3 px-4 border-b-2 font-medium text-sm border-transparent text-gray-500" data-tab="notifications">
+                        Notifications 
+                        <span id="notificationBadge" class="ml-1 bg-red-500 text-white text-xs rounded-full px-2 py-1 hidden">0</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- My Loans -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-bold mb-4">My Current Loans</h2>
+                    <div id="myLoans" class="space-y-3">
+                        <!-- Loans will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Available Books -->
+                <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Available Books</h2>
+                        <div class="flex space-x-2">
+                            <input type="text" id="bookSearch" placeholder="Search books..." class="border rounded px-3 py-2 w-64">
+                            <button onclick="searchBooks()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Search</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="py-2 px-4 border">Title</th>
+                                    <th class="py-2 px-4 border">Author</th>
+                                    <th class="py-2 px-4 border">Category</th>
+                                    <th class="py-2 px-4 border">Status</th>
+                                    <th class="py-2 px-4 border">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="booksTable">
+                                <!-- Books will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="bg-white rounded-lg shadow p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4">Recommended For You</h2>
+                <div id="recommendations" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Recommendations will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="notifications-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">My Notifications</h2>
+                    <div class="flex space-x-2">
+                        <button onclick="markAllAsRead()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Mark All as Read</button>
+                        <button onclick="clearAllNotifications()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm">Clear All</button>
+                    </div>
+                </div>
+
+                <!-- Notification Filters -->
+                <div class="flex space-x-2 mb-4 flex-wrap gap-2">
+                    <button onclick="loadNotifications('all')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">All</button>
+                    <button onclick="loadNotifications('overdue')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Overdue</button>
+                    <button onclick="loadNotifications('due-soon')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm">Due Soon</button>
+                    <button onclick="loadNotifications('general')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">General</button>
+                    <button onclick="loadNotifications('unread')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">Unread</button>
+                </div>
+
+                <!-- Notifications List -->
+                <div id="notificationsList" class="space-y-4">
+                    <!-- Notifications will be loaded here -->
+                </div>
+
+                <!-- No Notifications Message -->
+                <div id="noNotifications" class="text-center py-12 text-gray-500 hidden">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <p class="text-lg font-medium">No Notifications</p>
+                    <p class="text-sm mt-2">You're all caught up! Check back later for updates.</p>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-red-800 mb-2">Overdue Books</h3>
+                    <p id="overdueCount" class="text-2xl font-bold text-red-600">0</p>
+                    <p class="text-sm text-red-600">Need immediate attention</p>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-yellow-800 mb-2">Due Soon</h3>
+                    <p id="dueSoonCount" class="text-2xl font-bold text-yellow-600">0</p>
+                    <p class="text-sm text-yellow-600">Due in next 3 days</p>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">Total Notifications</h3>
+                    <p id="totalNotifications" class="text-2xl font-bold text-blue-600">0</p>
+                    <p class="text-sm text-blue-600">Unread: <span id="unreadCount">0</span></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let currentUser = null;
+        let currentNotifications = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('user');
+            if (!userData) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(userData);
+            if (currentUser.role !== 'student') {
+                window.location.href = `${currentUser.role}-dashboard.html`;
+                return;
+            }
+
+            document.getElementById('studentName').textContent = currentUser.name;
+            loadStudentData();
+            loadMyLoans();
+            loadAvailableBooks();
+            loadRecommendations();
+            loadNotifications('all'); // Load notifications on page load
+        });
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active styles from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-green-500', 'text-green-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab content
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            // Add active styles to selected tab button
+            const activeButton = document.querySelector(`[data-tab="${tabName}"]`);
+            if (activeButton) {
+                activeButton.classList.add('border-green-500', 'text-green-600');
+                activeButton.classList.remove('border-transparent', 'text-gray-500');
+            }
+
+            // Refresh data if needed
+            if (tabName === 'notifications') {
+                loadNotifications('all');
+            }
+        }
+
+        async function loadStudentData() {
+            try {
+                console.log('Loading student profile for:', currentUser.user_id);
+                const response = await fetch(`${API_BASE}/profile/${currentUser.user_id}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch profile`);
+                }
+                
+                const profile = await response.json();
+                console.log('Profile data:', profile);
+                
+                document.getElementById('studentInfo').innerHTML = `
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <strong class="text-blue-800">Student ID:</strong><br>
+                        <span class="text-blue-600">${profile.user_id || currentUser.user_id}</span>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <strong class="text-green-800">Email:</strong><br>
+                        <span class="text-green-600">${profile.email || currentUser.email || 'Not available'}</span>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <strong class="text-purple-800">Course/Program:</strong><br>
+                        <span class="text-purple-600">${profile.course || profile.program || 'Not specified'}</span>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading student data:', error);
+                // Fallback to localStorage data
+                document.getElementById('studentInfo').innerHTML = `
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <strong class="text-blue-800">Student ID:</strong><br>
+                        <span class="text-blue-600">${currentUser.user_id}</span>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <strong class="text-green-800">Email:</strong><br>
+                        <span class="text-green-600">${currentUser.email || 'Not available'}</span>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <strong class="text-purple-800">Role:</strong><br>
+                        <span class="text-purple-600">${currentUser.role || 'Student'}</span>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadMyLoans() {
+            try {
+                console.log('Loading loans for user:', currentUser.user_id);
+                const response = await fetch(`${API_BASE}/loans/${currentUser.user_id}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch loans`);
+                }
+                
+                const data = await response.json();
+                console.log('Loans data:', data);
+                
+                // Handle different response structures
+                const loans = data.loans || data || [];
+                
+                if (!Array.isArray(loans) || loans.length === 0) {
+                    document.getElementById('myLoans').innerHTML = `
+                        <div class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            <p class="text-lg font-medium">No Current Loans</p>
+                            <p class="text-sm mt-2">You don't have any active book loans.</p>
+                            <p class="text-xs mt-1 text-gray-600">Browse available books to borrow one.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const loansHTML = loans.map(loan => {
+                    // Handle different loan data structures
+                    const bookTitle = loan.book_title || loan.title || 'Unknown Book';
+                    const bookAuthor = loan.book_author || loan.author || 'Unknown Author';
+                    const dueDate = loan.due_date ? new Date(loan.due_date) : new Date();
+                    const returnDate = loan.return_date ? new Date(loan.return_date) : null;
+                    const isOverdue = dueDate < new Date() && !returnDate;
+                    const loanDate = loan.loan_date ? new Date(loan.loan_date) : null;
+                    
+                    return `
+                        <div class="border-l-4 ${returnDate ? 'border-green-500' : isOverdue ? 'border-red-500' : 'border-blue-500'} bg-gray-50 p-4 rounded-r-lg hover:shadow-md transition-shadow">
+                            <div class="font-semibold text-gray-800 text-lg">${bookTitle}</div>
+                            <div class="text-sm text-gray-600 mt-1">By ${bookAuthor}</div>
+                            <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
+                                <div>
+                                    <span class="font-medium">Loan Date:</span><br>
+                                    <span class="text-gray-700">${loanDate ? loanDate.toLocaleDateString('en-ZA') : 'Not specified'}</span>
+                                </div>
+                                <div>
+                                    <span class="font-medium">Due Date:</span><br>
+                                    <span class="${isOverdue ? 'text-red-600 font-semibold' : 'text-gray-700'}">
+                                        ${dueDate.toLocaleDateString('en-ZA')}
+                                        ${isOverdue ? ' ⚠️' : ''}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    returnDate ? 'bg-green-100 text-green-800' :
+                                    isOverdue ? 'bg-red-100 text-red-800' :
+                                    'bg-blue-100 text-blue-800'
+                                }">
+                                    ${returnDate ? 'Returned' : isOverdue ? 'OVERDUE' : 'Active'}
+                                </span>
+                            </div>
+                            ${loan.loan_id ? `<div class="text-xs text-gray-500 mt-2">Loan ID: ${loan.loan_id}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('myLoans').innerHTML = loansHTML;
+            } catch (error) {
+                console.error('Error loading loans:', error);
+                document.getElementById('myLoans').innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <strong>Error loading loans</strong>
+                        </div>
+                        <p class="text-sm mt-1">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadAvailableBooks() {
+            try {
+                console.log('Loading available books...');
+                const response = await fetch(`${API_BASE}/books/available`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch available books`);
+                }
+                
+                const data = await response.json();
+                console.log('Available books data:', data);
+                
+                // Handle different response structures
+                const books = data.books || data || [];
+                
+                if (!Array.isArray(books) || books.length === 0) {
+                    document.getElementById('booksTable').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-12 text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                    <p class="text-lg font-medium">No Available Books</p>
+                                    <p class="text-sm mt-2">All books are currently on loan.</p>
+                                    <p class="text-xs mt-1 text-gray-600">Please check back later.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                const booksHTML = books.map(book => {
+                    // Handle different book data structures
+                    const bookId = book.book_id || book.id;
+                    const title = book.title || 'Unknown Title';
+                    const author = book.author || 'Unknown Author';
+                    const category = book.category || 'Uncategorized';
+                    const status = book.status || 'available';
+                    
+                    // Safely escape bookId for JavaScript
+                    const safeBookId = bookId ? bookId.replace(/'/g, "\\'") : '';
+                    
+                    return `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="py-3 px-4 border font-medium">${title}</td>
+                            <td class="py-3 px-4 border">${author}</td>
+                            <td class="py-3 px-4 border">
+                                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">${category}</span>
+                            </td>
+                            <td class="py-3 px-4 border">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    status === 'available' ? 'bg-green-100 text-green-800' :
+                                    status === 'borrowed' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }">
+                                    ${status.charAt(0).toUpperCase() + status.slice(1)}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 border">
+                                <div class="flex flex-col space-y-2">
+                                    ${status === 'available' ? `
+                                        <button onclick="borrowBook('${safeBookId}')" 
+                                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200 font-medium">
+                                            Borrow Book
+                                        </button>
+                                        <button onclick="reserveBook('${safeBookId}')" 
+                                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200 font-medium">
+                                            Reserve Book
+                                        </button>
+                                    ` : `
+                                        <button class="bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed font-medium" disabled>
+                                            Unavailable
+                                        </button>
+                                    `}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                document.getElementById('booksTable').innerHTML = booksHTML;
+            } catch (error) {
+                console.error('Error loading books:', error);
+                document.getElementById('booksTable').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-red-600 bg-red-50">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 mb-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="font-medium">Error Loading Books</p>
+                                <p class="text-sm mt-1">${error.message}</p>
+                                <button onclick="loadAvailableBooks()" class="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                                    Try Again
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function loadRecommendations() {
+            try {
+                console.log('Loading recommendations for user:', currentUser.user_id);
+                const response = await fetch(`${API_BASE}/recommendation/${currentUser.user_id}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch recommendations`);
+                }
+                
+                const data = await response.json();
+                console.log('Recommendations data:', data);
+                
+                // Handle different response structures
+                const recommendations = data.recommendedBooks || data.recommendations || data || [];
+                
+                if (!Array.isArray(recommendations) || recommendations.length === 0) {
+                    document.getElementById('recommendations').innerHTML = `
+                        <div class="col-span-3 text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <p class="text-lg font-medium">No Recommendations Available</p>
+                            <p class="text-sm mt-2">Start borrowing books to get personalized recommendations!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const recommendationsHTML = recommendations.map(book => {
+                    // Handle different book data structures
+                    const bookId = book.book_id || book.id;
+                    const title = book.title || 'Unknown Title';
+                    const author = book.author || 'Unknown Author';
+                    const category = book.category || 'Uncategorized';
+                    const description = book.description || 'Recommended based on your interests';
+                    
+                    // Safely escape bookId for JavaScript
+                    const safeBookId = bookId ? bookId.replace(/'/g, "\\'") : '';
+                    
+                    return `
+                        <div class="border border-blue-200 rounded-lg p-4 bg-blue-50 hover:bg-blue-100 transition-colors duration-200">
+                            <h3 class="font-semibold text-blue-800 text-lg">${title}</h3>
+                            <p class="text-sm text-blue-600 mt-1">By ${author}</p>
+                            <p class="text-xs text-blue-500 mt-2">Category: ${category}</p>
+                            <p class="text-xs text-gray-600 mt-2">${description}</p>
+                            <div class="flex flex-col space-y-2 mt-3">
+                                <button onclick="borrowBook('${safeBookId}')" 
+                                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition-colors duration-200 font-medium">
+                                    Borrow Book
+                                </button>
+                                <button onclick="reserveBook('${safeBookId}')" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition-colors duration-200 font-medium">
+                                    Reserve Book
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('recommendations').innerHTML = recommendationsHTML;
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                document.getElementById('recommendations').innerHTML = `
+                    <div class="col-span-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <strong>Recommendations Unavailable</strong>
+                        </div>
+                        <p class="text-sm mt-1">${error.message}</p>
+                        <p class="text-xs mt-2">Browse available books instead.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // NOTIFICATIONS FUNCTIONS
+        async function loadNotifications(filter = 'all') {
+            try {
+                console.log('Loading notifications with filter:', filter);
+                
+                // Show loading state
+                document.getElementById('notificationsList').innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                        <p class="text-gray-600 mt-2">Loading notifications...</p>
+                    </div>
+                `;
+                document.getElementById('noNotifications').classList.add('hidden');
+
+                // In a real application, you would fetch from an API like:
+                // const response = await fetch(`${API_BASE}/notifications/student/${currentUser.user_id}?filter=${filter}`);
+                // const data = await response.json();
+                
+                // For now, we'll simulate notifications based on the user's loans
+                const loansResponse = await fetch(`${API_BASE}/loans/${currentUser.user_id}`);
+                if (!loansResponse.ok) {
+                    throw new Error('Failed to fetch loans for notifications');
+                }
+                
+                const loansData = await loansResponse.json();
+                const loans = loansData.loans || loansData || [];
+                
+                // Generate notifications based on loans
+                const simulatedNotifications = generateNotificationsFromLoans(loans, currentUser);
+                
+                // Filter notifications based on the selected filter
+                let filteredNotifications = simulatedNotifications;
+                if (filter === 'overdue') {
+                    filteredNotifications = simulatedNotifications.filter(n => n.type === 'overdue');
+                } else if (filter === 'due-soon') {
+                    filteredNotifications = simulatedNotifications.filter(n => n.type === 'due_soon');
+                } else if (filter === 'general') {
+                    filteredNotifications = simulatedNotifications.filter(n => n.type === 'general');
+                } else if (filter === 'unread') {
+                    filteredNotifications = simulatedNotifications.filter(n => !n.read);
+                }
+
+                currentNotifications = filteredNotifications;
+                
+                // Update notification counts
+                updateNotificationCounts(simulatedNotifications);
+                
+                // Display notifications
+                if (filteredNotifications.length === 0) {
+                    document.getElementById('notificationsList').innerHTML = '';
+                    document.getElementById('noNotifications').classList.remove('hidden');
+                } else {
+                    document.getElementById('noNotifications').classList.add('hidden');
+                    const notificationsHTML = filteredNotifications.map(notification => `
+                        <div class="border-l-4 ${getNotificationBorderColor(notification.type)} bg-white p-4 rounded-r-lg shadow-sm hover:shadow-md transition-shadow ${notification.read ? 'opacity-75' : ''}">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getNotificationBadgeColor(notification.type)} mr-2">
+                                            ${getNotificationTypeLabel(notification.type)}
+                                        </span>
+                                        <span class="text-xs text-gray-500">${new Date(notification.date).toLocaleDateString('en-ZA')}</span>
+                                        ${!notification.read ? '<span class="ml-2 w-2 h-2 bg-red-500 rounded-full"></span>' : ''}
+                                    </div>
+                                    <h3 class="font-semibold text-gray-800">${notification.title}</h3>
+                                    <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+                                    ${notification.bookTitle ? `<p class="text-xs text-gray-500 mt-2">Book: <strong>${notification.bookTitle}</strong></p>` : ''}
+                                    ${notification.dueDate ? `<p class="text-xs text-gray-500">Due: <strong>${new Date(notification.dueDate).toLocaleDateString('en-ZA')}</strong></p>` : ''}
+                                </div>
+                                <div class="flex space-x-2 ml-4">
+                                    ${!notification.read ? `
+                                        <button onclick="markAsRead('${notification.id}')" class="text-blue-600 hover:text-blue-800 text-sm">
+                                            Mark Read
+                                        </button>
+                                    ` : ''}
+                                    <button onclick="deleteNotification('${notification.id}')" class="text-red-600 hover:text-red-800 text-sm">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('notificationsList').innerHTML = notificationsHTML;
+                }
+                
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                document.getElementById('notificationsList').innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <strong>Error loading notifications</strong>
+                        </div>
+                        <p class="text-sm mt-1">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function generateNotificationsFromLoans(loans, user) {
+            const notifications = [];
+            const now = new Date();
+            
+            loans.forEach(loan => {
+                if (!loan.return_date) {
+                    const dueDate = new Date(loan.due_date);
+                    const daysUntilDue = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+                    const bookTitle = loan.book_title || loan.title || 'Unknown Book';
+                    
+                    // Overdue notification
+                    if (dueDate < now) {
+                        const daysOverdue = Math.ceil((now - dueDate) / (1000 * 60 * 60 * 24));
+                        notifications.push({
+                            id: `overdue-${loan.loan_id}`,
+                            type: 'overdue',
+                            title: 'Book Overdue',
+                            message: `Your book "${bookTitle}" is ${daysOverdue} day(s) overdue. Please return it as soon as possible to avoid penalties.`,
+                            bookTitle: bookTitle,
+                            dueDate: loan.due_date,
+                            date: dueDate.toISOString(),
+                            read: false,
+                            priority: 'high'
+                        });
+                    }
+                    // Due soon notification (within 3 days)
+                    else if (daysUntilDue <= 3 && daysUntilDue > 0) {
+                        notifications.push({
+                            id: `due-soon-${loan.loan_id}`,
+                            type: 'due_soon',
+                            title: 'Book Due Soon',
+                            message: `Your book "${bookTitle}" is due in ${daysUntilDue} day(s). Please remember to return it on time.`,
+                            bookTitle: bookTitle,
+                            dueDate: loan.due_date,
+                            date: now.toISOString(),
+                            read: false,
+                            priority: 'medium'
+                        });
+                    }
+                }
+            });
+            
+            // Add some general notifications
+            notifications.push({
+                id: 'welcome-1',
+                type: 'general',
+                title: 'Welcome to Richfield Library',
+                message: 'Thank you for using our library system. Remember to return books on time to avoid late fees.',
+                date: new Date().toISOString(),
+                read: true,
+                priority: 'low'
+            });
+            
+            // Sort by priority and date (unread first, then by priority and date)
+            return notifications.sort((a, b) => {
+                if (a.read !== b.read) return a.read ? 1 : -1;
+                if (a.priority !== b.priority) {
+                    const priorityOrder = { high: 0, medium: 1, low: 2 };
+                    return priorityOrder[a.priority] - priorityOrder[b.priority];
+                }
+                return new Date(b.date) - new Date(a.date);
+            });
+        }
+
+        function updateNotificationCounts(notifications) {
+            const total = notifications.length;
+            const unread = notifications.filter(n => !n.read).length;
+            const overdue = notifications.filter(n => n.type === 'overdue').length;
+            const dueSoon = notifications.filter(n => n.type === 'due_soon').length;
+            
+            document.getElementById('totalNotifications').textContent = total;
+            document.getElementById('unreadCount').textContent = unread;
+            document.getElementById('overdueCount').textContent = overdue;
+            document.getElementById('dueSoonCount').textContent = dueSoon;
+            
+            // Update notification badge
+            const badge = document.getElementById('notificationBadge');
+            if (unread > 0) {
+                badge.textContent = unread;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function getNotificationBorderColor(type) {
+            switch (type) {
+                case 'overdue': return 'border-red-500';
+                case 'due_soon': return 'border-yellow-500';
+                case 'general': return 'border-blue-500';
+                default: return 'border-gray-500';
+            }
+        }
+
+        function getNotificationBadgeColor(type) {
+            switch (type) {
+                case 'overdue': return 'bg-red-100 text-red-800';
+                case 'due_soon': return 'bg-yellow-100 text-yellow-800';
+                case 'general': return 'bg-blue-100 text-blue-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getNotificationTypeLabel(type) {
+            switch (type) {
+                case 'overdue': return 'Overdue';
+                case 'due_soon': return 'Due Soon';
+                case 'general': return 'General';
+                default: return 'Notification';
+            }
+        }
+
+        function markAsRead(notificationId) {
+            // In a real application, you would make an API call to mark as read
+            // For now, we'll update the local state
+            const notification = currentNotifications.find(n => n.id === notificationId);
+            if (notification) {
+                notification.read = true;
+                loadNotifications(); // Reload to reflect changes
+            }
+        }
+
+        function markAllAsRead() {
+            // Mark all notifications as read
+            currentNotifications.forEach(notification => {
+                notification.read = true;
+            });
+            loadNotifications(); // Reload to reflect changes
+        }
+
+        function deleteNotification(notificationId) {
+            // In a real application, you would make an API call to delete
+            // For now, we'll filter it out from the local state
+            currentNotifications = currentNotifications.filter(n => n.id !== notificationId);
+            loadNotifications(); // Reload to reflect changes
+        }
+
+        function clearAllNotifications() {
+            if (confirm('Are you sure you want to clear all notifications?')) {
+                // In a real application, you would make an API call to clear all
+                // For now, we'll clear the local state
+                currentNotifications = [];
+                loadNotifications(); // Reload to reflect changes
+            }
+        }
+
+        async function searchBooks() {
+            const searchTerm = document.getElementById('bookSearch').value.trim();
+            if (!searchTerm) {
+                loadAvailableBooks();
+                return;
+            }
+
+            try {
+                console.log('Searching books for:', searchTerm);
+                const response = await fetch(`${API_BASE}/books/searchtext?search=${encodeURIComponent(searchTerm)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to search books`);
+                }
+                
+                const data = await response.json();
+                console.log('Search results:', data);
+                
+                // Handle different response structures
+                const books = data.books || data || [];
+                
+                if (!Array.isArray(books) || books.length === 0) {
+                    document.getElementById('booksTable').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-12 h-12 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    <p>No books found for "${searchTerm}"</p>
+                                    <button onclick="loadAvailableBooks()" class="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                                        View All Available Books
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                const booksHTML = books.map(book => {
+                    const bookId = book.book_id || book.id;
+                    const title = book.title || 'Unknown Title';
+                    const author = book.author || 'Unknown Author';
+                    const category = book.category || 'Uncategorized';
+                    const status = book.status || 'available';
+                    
+                    const safeBookId = bookId ? bookId.replace(/'/g, "\\'") : '';
+                    
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-3 px-4 border font-medium">${title}</td>
+                            <td class="py-3 px-4 border">${author}</td>
+                            <td class="py-3 px-4 border">
+                                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">${category}</span>
+                            </td>
+                            <td class="py-3 px-4 border">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    status === 'available' ? 'bg-green-100 text-green-800' :
+                                    status === 'borrowed' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }">
+                                    ${status.charAt(0).toUpperCase() + status.slice(1)}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 border">
+                                <div class="flex flex-col space-y-2">
+                                    ${status === 'available' ? `
+                                        <button onclick="borrowBook('${safeBookId}')" 
+                                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200 font-medium">
+                                            Borrow Book
+                                        </button>
+                                        <button onclick="reserveBook('${safeBookId}')" 
+                                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200 font-medium">
+                                            Reserve Book
+                                        </button>
+                                    ` : `
+                                        <button class="bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed font-medium" disabled>
+                                            Unavailable
+                                        </button>
+                                    `}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                document.getElementById('booksTable').innerHTML = booksHTML;
+            } catch (error) {
+                console.error('Error searching books:', error);
+                alert(`Error searching books: ${error.message}`);
+            }
+        }
+     async function borrowBook(bookId) {
+    if (!bookId) {
+        alert('Error: Invalid book ID');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to borrow this book?\n\nLoan period: 3 days\nYou will be responsible for returning the book on time.')) {
+        return;
+    }
+
+    try {
+        console.log('Creating loan for book:', bookId);
+        
+        // Calculate dates: loan date = today, due date = today + 14 days
+        const loanDate = new Date().toISOString().split('T')[0];
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 14);
+        const dueDateString = dueDate.toISOString().split('T')[0];
+
+        // Use both admin_id (for backend validation) and created_by (for database)
+        const loanData = {
+            user_id: currentUser.user_id,
+            book_id: bookId,
+            loan_date: loanDate,
+            due_date: dueDateString,
+            status: 'active',
+            admin_id: 'ADMIN001', // For backend validation
+            created_by: currentUser.user_id // For database insertion
+        };
+
+        console.log('Sending loan data:', loanData);
+
+        const response = await fetch(`${API_BASE}/loans/create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(loanData)
+        });
+
+        const data = await response.json();
+        console.log('Loan creation response:', data);
+
+        if (response.ok) {
+            alert(`✅ Book borrowed successfully!\n\n📅 Due Date: ${dueDate.toLocaleDateString('en-ZA')}\n\nPlease return the book by the due date to avoid late fees.`);
+            // Reload all data
+            loadMyLoans();
+            loadAvailableBooks();
+            loadRecommendations();
+            loadNotifications(); // Refresh notifications
+        } else {
+            alert(`❌ Failed to borrow book: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error borrowing book:', error);
+        alert('❌ Error borrowing book. Please try again.');
+    }
+}
+        async function reserveBook(bookId) {
+            if (!bookId) {
+                alert('Error: Invalid book ID');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to reserve this book?\n\nThis will put the book on hold for you. You will be notified when it becomes available for borrowing.')) {
+                return;
+            }
+
+            try {
+                console.log('Creating reservation for book:', bookId);
+
+                const response = await fetch(`${API_BASE}/reservations/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.user_id,
+                        book_id: bookId,
+                        reservation_date: new Date().toISOString().split('T')[0],
+                        status: 'pending'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Reservation creation response:', data);
+
+                if (response.ok) {
+                    alert(`✅ Book reserved successfully!\n\nYou will be notified when the book becomes available for borrowing.`);
+                    // Reload available books to reflect the reservation
+                    loadAvailableBooks();
+                    loadNotifications(); // Refresh notifications
+                } else {
+                    alert(`❌ Failed to reserve book: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error reserving book:', error);
+                alert('❌ Error reserving book. Please try again.');
+            }
+        }
+
+        function manage2FA() {
+            window.location.href = '2fa-management.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

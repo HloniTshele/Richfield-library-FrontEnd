@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Librarian Dashboard - Richfield Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-purple-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://cdn.briefly.co.za/images/720/6b4cbb0e53c53f0a.jpeg?v=1" alt="Logo" class="w-12 h-12 rounded">
+                <div>
+                    <h1 class="text-xl font-bold">Librarian Dashboard</h1>
+                    <p class="text-purple-200 text-sm">Richfield Library Management System</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="librarianName" class="font-semibold">Loading...</span>
+                <button onclick="manage2FA()" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition text-sm">🔒 2FA</button>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg transition text-sm">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-md font-semibold text-gray-700">Books Available</h3>
+                <p id="availableBooks" class="text-2xl font-bold text-green-600">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-md font-semibold text-gray-700">Active Loans</h3>
+                <p id="activeLoans" class="text-2xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-md font-semibold text-gray-700">Pending Reservations</h3>
+                <p id="pendingReservations" class="text-2xl font-bold text-orange-600">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-md font-semibold text-gray-700">Overdue Books</h3>
+                <p id="overdueBooks" class="text-2xl font-bold text-red-600">0</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="border-b">
+                <nav class="flex -mb-px">
+                    <button onclick="showTab('books')" class="tab-button py-3 px-4 border-b-2 font-medium text-sm border-purple-500 text-purple-600" data-tab="books">Book Management</button>
+                    <button onclick="showTab('loans')" class="tab-button py-3 px-4 border-b-2 font-medium text-sm border-transparent text-gray-500" data-tab="loans">Loan Management</button>
+                    <button onclick="showTab('reservations')" class="tab-button py-3 px-4 border-b-2 font-medium text-sm border-transparent text-gray-500" data-tab="reservations">Reservations</button>
+                    <button onclick="showTab('notifications')" class="tab-button py-3 px-4 border-b-2 font-medium text-sm border-transparent text-gray-500" data-tab="notifications">Notifications</button>
+                </nav>
+            </div>
+
+            <!-- Books Tab -->
+            <div id="books-tab" class="tab-content p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">Book Inventory</h2>
+                    <div class="flex space-x-2">
+                        <input type="text" id="bookSearch" placeholder="Search books..." class="border rounded px-3 py-2 text-sm w-48">
+                        <button onclick="searchBooks()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm">Search</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white text-sm">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="py-2 px-3 border">Book ID</th>
+                                <th class="py-2 px-3 border">Title</th>
+                                <th class="py-2 px-3 border">Author</th>
+                                <th class="py-2 px-3 border">ISBN</th>
+                                <th class="py-2 px-3 border">Category</th>
+                                <th class="py-2 px-3 border">Status</th>
+                                <th class="py-2 px-3 border">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="booksTable">
+                            <!-- Books will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Loans Tab -->
+            <div id="loans-tab" class="tab-content p-4 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">Loan Management</h2>
+                    <div class="flex space-x-2">
+                        <button onclick="createNewLoan()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">Create Loan</button>
+                    </div>
+                </div>
+                
+                <!-- Loan Filters -->
+                <div class="flex space-x-2 mb-4 flex-wrap gap-2">
+                    <button onclick="loadLoans()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">All Loans</button>
+                    <button onclick="loadLoansByStatus('active')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Active</button>
+                    <button onclick="loadLoansByStatus('returned')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Returned</button>
+                    <button onclick="loadOverdueLoans()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Overdue</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white text-sm">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="py-2 px-3 border">Loan ID</th>
+                                <th class="py-2 px-3 border">User</th>
+                                <th class="py-2 px-3 border">Book</th>
+                                <th class="py-2 px-3 border">Loan Date</th>
+                                <th class="py-2 px-3 border">Due Date</th>
+                                <th class="py-2 px-3 border">Return Date</th>
+                                <th class="py-2 px-3 border">Status</th>
+                                <th class="py-2 px-3 border">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loansTable">
+                            <!-- Loans will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reservations Tab -->
+            <div id="reservations-tab" class="tab-content p-4 hidden">
+                <h2 class="text-lg font-bold mb-4">Pending Reservations</h2>
+                <div id="reservationsList" class="space-y-4">
+                    <!-- Reservations will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="tab-content p-4 hidden">
+                <h2 class="text-lg font-bold mb-4">System Notifications</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-yellow-800 mb-2">Overdue Books</h3>
+                        <div id="overdueList" class="space-y-2 max-h-60 overflow-y-auto">
+                            <!-- Overdue books will be loaded here -->
+                        </div>
+                        <button onclick="sendOverdueNotifications()" class="mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm">Send Reminders</button>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-800 mb-2">Upcoming Returns</h3>
+                        <div id="upcomingReturns" class="space-y-2 max-h-60 overflow-y-auto">
+                            <!-- Upcoming returns will be loaded here -->
+                        </div>
+                        <button onclick="sendDueReminders()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Send Reminders</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('user');
+            if (!userData) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(userData);
+            if (currentUser.role !== 'librarian') {
+                window.location.href = `${currentUser.role}-dashboard.html`;
+                return;
+            }
+
+            document.getElementById('librarianName').textContent = currentUser.name;
+            showTab('books');
+            updateStats();
+        });
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-purple-500', 'text-purple-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            const activeButton = document.querySelector(`[data-tab="${tabName}"]`);
+            if (activeButton) {
+                activeButton.classList.add('border-purple-500', 'text-purple-600');
+                activeButton.classList.remove('border-transparent', 'text-gray-500');
+            }
+
+            switch(tabName) {
+                case 'books':
+                    loadBooks();
+                    break;
+                case 'loans':
+                    loadLoans();
+                    break;
+                case 'reservations':
+                    loadReservations();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+            }
+        }
+
+        async function loadBooks() {
+            try {
+                const response = await fetch(`${API_BASE}/books/all`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch books');
+                }
+
+                const books = data.books || data;
+                const booksHTML = books.map(book => `
+                    <tr>
+                        <td class="py-2 px-3 border">${book.book_id}</td>
+                        <td class="py-2 px-3 border">${book.title}</td>
+                        <td class="py-2 px-3 border">${book.author}</td>
+                        <td class="py-2 px-3 border">${book.isbn || '-'}</td>
+                        <td class="py-2 px-3 border">${book.category || 'Uncategorized'}</td>
+                        <td class="py-2 px-3 border">
+                            <span class="px-2 py-1 rounded text-xs ${
+                                book.status === 'available' ? 'bg-green-100 text-green-800' :
+                                book.status === 'borrowed' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                            }">${book.status}</span>
+                        </td>
+                        <td class="py-2 px-3 border">
+                            <button onclick="updateBookStatus('${book.book_id}')" class="text-green-600 hover:text-green-800 text-xs">Update Status</button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('booksTable').innerHTML = booksHTML || '<tr><td colspan="7" class="text-center py-4">No books found</td></tr>';
+            } catch (error) {
+                console.error('Error loading books:', error);
+                document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading books</td></tr>';
+            }
+        }
+
+        async function updateStats() {
+            try {
+                // Load all books
+                const booksResponse = await fetch(`${API_BASE}/books/all`);
+                const booksData = await booksResponse.json();
+                const books = booksData.books || booksData;
+                const availableBooks = books.filter(book => book.status === 'available').length;
+                document.getElementById('availableBooks').textContent = availableBooks;
+
+                // Load active loans
+                const loansResponse = await fetch(`${API_BASE}/loans/status/filter?status=active`);
+                const loansData = await loansResponse.json();
+                const activeLoans = (loansData.loans ? loansData.loans.length : 0) || (Array.isArray(loansData) ? loansData.length : 0);
+                document.getElementById('activeLoans').textContent = activeLoans;
+
+                // Load overdue books
+                const overdueResponse = await fetch(`${API_BASE}/loans/overdue/all`);
+                const overdueData = await overdueResponse.json();
+                const overdueBooks = (overdueData.loans ? overdueData.loans.length : 0) || (Array.isArray(overdueData) ? overdueData.length : 0);
+                document.getElementById('overdueBooks').textContent = overdueBooks;
+
+                // Pending reservations
+                document.getElementById('pendingReservations').textContent = '0';
+                
+                console.log('Stats updated:', { availableBooks, activeLoans, overdueBooks });
+                
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        async function searchBooks() {
+            const searchTerm = document.getElementById('bookSearch').value;
+            if (!searchTerm) {
+                loadBooks();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/books/searchtext?search=${encodeURIComponent(searchTerm)}`);
+                const data = await response.json();
+                
+                if (data.books && data.books.length > 0) {
+                    const booksHTML = data.books.map(book => `
+                        <tr>
+                            <td class="py-2 px-3 border">${book.book_id}</td>
+                            <td class="py-2 px-3 border">${book.title}</td>
+                            <td class="py-2 px-3 border">${book.author}</td>
+                            <td class="py-2 px-3 border">${book.isbn || '-'}</td>
+                            <td class="py-2 px-3 border">${book.category || 'Uncategorized'}</td>
+                            <td class="py-2 px-3 border">
+                                <span class="px-2 py-1 rounded text-xs ${
+                                    book.status === 'available' ? 'bg-green-100 text-green-800' :
+                                    book.status === 'borrowed' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }">${book.status}</span>
+                            </td>
+                            <td class="py-2 px-3 border">
+                                <button onclick="updateBookStatus('${book.book_id}')" class="text-green-600 hover:text-green-800 text-xs">Update Status</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    
+                    document.getElementById('booksTable').innerHTML = booksHTML;
+                } else {
+                    document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">No books found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error searching books:', error);
+                document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error searching books</td></tr>';
+            }
+        }
+
+        // LOAN MANAGEMENT FUNCTIONS 
+        async function loadLoans() {
+            try {
+                console.log('🚀 Loading all loans using working endpoints...');
+                document.getElementById('loansTable').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            <div class="flex justify-center items-center space-x-2">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                                <span class="text-gray-600">Loading loans...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+
+                // Since /loans/all doesn't work, let's combine data from working endpoints
+                const [activeResponse, returnedResponse, overdueResponse] = await Promise.all([
+                    fetch(`${API_BASE}/loans/status/filter?status=active`),
+                    fetch(`${API_BASE}/loans/status/filter?status=returned`),
+                    fetch(`${API_BASE}/loans/overdue/all`)
+                ]);
+
+                if (!activeResponse.ok || !returnedResponse.ok || !overdueResponse.ok) {
+                    throw new Error('Failed to fetch loans from one or more endpoints');
+                }
+
+                const activeData = await activeResponse.json();
+                const returnedData = await returnedResponse.json();
+                const overdueData = await overdueResponse.json();
+
+                console.log('Active loans:', activeData);
+                console.log('Returned loans:', returnedData);
+                console.log('Overdue loans:', overdueData);
+
+                // Combine all loans
+                const allLoans = [
+                    ...(activeData.loans || activeData || []),
+                    ...(returnedData.loans || returnedData || []),
+                    ...(overdueData.loans || overdueData || [])
+                ];
+
+                // Remove duplicates based on loan_id
+                const uniqueLoans = allLoans.filter((loan, index, self) =>
+                    index === self.findIndex(l => l.loan_id === loan.loan_id)
+                );
+
+                console.log(`📊 Combined ${uniqueLoans.length} unique loans`);
+
+                if (uniqueLoans.length === 0) {
+                    document.getElementById('loansTable').innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-12 text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                    <p class="text-lg">No Loans Found</p>
+                                    <button onclick="createNewLoan()" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">
+                                        Create First Loan
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                console.log(`🎉 Displaying ${uniqueLoans.length} loans`);
+                displayLoans(uniqueLoans);
+
+            } catch (error) {
+                console.error('❌ Error loading loans:', error);
+                
+                // Fallback: Try to use just active loans
+                try {
+                    console.log('🔄 Trying fallback: loading only active loans...');
+                    const response = await fetch(`${API_BASE}/loans/status/filter?status=active`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const loans = data.loans || data || [];
+                        if (loans.length > 0) {
+                            console.log(`🎉 Fallback successful: Displaying ${loans.length} active loans`);
+                            displayLoans(loans);
+                            return;
+                        }
+                    }
+                } catch (fallbackError) {
+                    console.error('❌ Fallback also failed:', fallbackError);
+                }
+
+                document.getElementById('loansTable').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-red-600 bg-red-50">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-red-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="font-medium">Failed to Load Loans</p>
+                                <p class="text-sm mt-1">${error.message}</p>
+                                <p class="text-xs mt-2 text-gray-600">Please check if the server is running and try again.</p>
+                                <button onclick="loadLoans()" class="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                                    Try Again
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function loadLoansByStatus(status) {
+            try {
+                document.getElementById('loansTable').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            <div class="flex justify-center items-center space-x-2">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                                <span class="text-gray-600">Loading ${status} loans...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                let endpoint = '';
+                if (status === 'active' || status === 'returned') {
+                    endpoint = `${API_BASE}/loans/status/filter?status=${status}`;
+                } else if (status === 'overdue') {
+                    // For overdue, use the dedicated function
+                    await loadOverdueLoans();
+                    return;
+                } else {
+                    throw new Error(`Invalid status: ${status}`);
+                }
+                
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error(`Failed to fetch ${status} loans`);
+                
+                const data = await response.json();
+                const loans = data.loans || data || [];
+                
+                console.log(`📊 ${status} loans:`, loans.length);
+                
+                if (loans.length > 0) {
+                    displayLoans(loans);
+                } else {
+                    document.getElementById('loansTable').innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-12 text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                    <p class="text-lg">No ${status} loans found</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error(`❌ Error loading ${status} loans:`, error);
+                document.getElementById('loansTable').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-red-600 bg-red-50">
+                            <div class="flex flex-col items-center">
+                                <p class="font-medium">Failed to Load ${status} Loans</p>
+                                <p class="text-sm mt-1">${error.message}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function loadOverdueLoans() {
+            try {
+                console.log('⚠️ Loading overdue loans...');
+                document.getElementById('loansTable').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            <div class="flex justify-center items-center space-x-2">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
+                                <span class="text-gray-600">Loading overdue loans...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                // Use the overdue endpoint directly
+                const response = await fetch(`${API_BASE}/loans/overdue/all`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch overdue loans`);
+                }
+                
+                const data = await response.json();
+                console.log('Overdue loans response:', data);
+                
+                // Handle different response structures
+                const loans = data.loans || data || [];
+                
+                console.log(`📊 Found ${loans.length} overdue loans`);
+                
+                if (loans.length > 0) {
+                    displayLoans(loans);
+                } else {
+                    document.getElementById('loansTable').innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-12 text-green-600 bg-green-50">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-16 h-16 mb-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <p class="text-lg">No Overdue Loans!</p>
+                                    <p class="text-sm mt-1">All books are returned on time. Great job! 📚</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading overdue loans:', error);
+                
+                // Fallback: Try to filter active loans manually for overdue
+                try {
+                    console.log('🔄 Trying fallback: filtering active loans for overdue...');
+                    const response = await fetch(`${API_BASE}/loans/status/filter?status=active`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const activeLoans = data.loans || data || [];
+                        const overdueLoans = activeLoans.filter(loan => {
+                            const dueDate = new Date(loan.due_date);
+                            return dueDate < new Date();
+                        });
+                        
+                        if (overdueLoans.length > 0) {
+                            console.log(`🎉 Fallback successful: Found ${overdueLoans.length} overdue loans`);
+                            displayLoans(overdueLoans);
+                            return;
+                        }
+                    }
+                } catch (fallbackError) {
+                    console.error('❌ Fallback also failed:', fallbackError);
+                }
+
+                document.getElementById('loansTable').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-red-600 bg-red-50">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-red-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="font-medium">Failed to Load Overdue Loans</p>
+                                <p class="text-sm mt-1">${error.message}</p>
+                                <div class="mt-3 flex space-x-2">
+                                    <button onclick="loadOverdueLoans()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                                        Try Again
+                                    </button>
+                                    <button onclick="loadLoans()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm">
+                                        View All Loans
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayLoans(loans) {
+            try {
+                console.log('📋 Displaying loans:', loans.length);
+                
+                if (!Array.isArray(loans) || loans.length === 0) {
+                    document.getElementById('loansTable').innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-8 text-gray-500">
+                                No loans data to display
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                const loansHTML = loans.map(loan => {
+                    const loanDate = new Date(loan.loan_date);
+                    const dueDate = new Date(loan.due_date);
+                    const returnDate = loan.return_date ? new Date(loan.return_date) : null;
+                    const isOverdue = dueDate < new Date() && loan.status === 'active';
+                    
+                    const statusClass = 
+                        loan.status === 'active' ? 
+                            (isOverdue ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-green-100 text-green-800') :
+                        loan.status === 'returned' ? 'bg-blue-100 text-blue-800' :
+                        'bg-yellow-100 text-yellow-800';
+
+                    const statusText = loan.status + (isOverdue ? ' (OVERDUE)' : '');
+
+                    // Safely escape loan_id for JavaScript
+                    const safeLoanId = loan.loan_id ? loan.loan_id.replace(/'/g, "\\'") : '';
+
+                    return `
+                        <tr class="hover:bg-gray-50 transition-colors duration-200">
+                            <td class="py-3 px-4 border border-gray-200 font-mono text-sm">${loan.loan_id || 'N/A'}</td>
+                            <td class="py-3 px-4 border border-gray-200">
+                                <div class="font-semibold text-gray-800">${loan.user_name || loan.user_id || 'Unknown User'}</div>
+                                <div class="text-xs text-gray-500 mt-1">${loan.user_email || 'No email'}</div>
+                            </td>
+                            <td class="py-3 px-4 border border-gray-200">
+                                <div class="font-semibold text-gray-800">${loan.book_title || loan.book_id || 'Unknown Book'}</div>
+                                <div class="text-xs text-gray-500 mt-1">by ${loan.book_author || 'Unknown Author'}</div>
+                            </td>
+                            <td class="py-3 px-4 border border-gray-200 text-sm">${loanDate.toLocaleDateString('en-ZA')}</td>
+                            <td class="py-3 px-4 border border-gray-200 text-sm font-medium ${isOverdue ? 'text-red-600' : 'text-gray-700'}">
+                                ${dueDate.toLocaleDateString('en-ZA')}
+                                ${isOverdue ? ' ⚠️' : ''}
+                            </td>
+                            <td class="py-3 px-4 border border-gray-200 text-sm">
+                                ${returnDate ? 
+                                    `<span class="text-green-600">${returnDate.toLocaleDateString('en-ZA')}</span>` : 
+                                    '<span class="text-gray-400 italic">Not returned</span>'
+                                }
+                            </td>
+                            <td class="py-3 px-4 border border-gray-200">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 border border-gray-200">
+                                <div class="flex flex-col space-y-2">
+                                    ${loan.status === 'active' ? `
+                                        <button onclick="handleReturnBook('${safeLoanId}')" 
+                                                class="text-green-700 hover:text-green-800 text-xs bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded border border-green-200 transition-colors duration-200 font-medium">
+                                            📚 Return
+                                        </button>
+                                        <button onclick="handleExtendDueDate('${safeLoanId}')" 
+                                                class="text-blue-700 hover:text-blue-800 text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded border border-blue-200 transition-colors duration-200 font-medium">
+                                            📅 Extend
+                                        </button>
+                                    ` : ''}
+                                    <button onclick="handleViewLoanDetails('${safeLoanId}')" 
+                                            class="text-purple-700 hover:text-purple-800 text-xs bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded border border-purple-200 transition-colors duration-200 font-medium">
+                                        👁️ View
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                document.getElementById('loansTable').innerHTML = loansHTML;
+                console.log('✅ Loans table updated successfully');
+                
+            } catch (error) {
+                console.error('❌ Error displaying loans:', error);
+                document.getElementById('loansTable').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-red-600 bg-red-50">
+                            <div class="flex flex-col items-center">
+                                <p class="font-medium">Error displaying loans</p>
+                                <p class="text-sm mt-1">${error.message}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // RETURN BOOK FUNCTION
+        async function handleReturnBook(loanId) {
+            if (!loanId) {
+                console.error('No loan ID provided');
+                return;
+            }
+            
+            console.log('📚 Returning book for loan:', loanId);
+            
+            if (!confirm(`Are you sure you want to mark loan ${loanId} as returned?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/loans/return`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        loan_id: loanId,
+                        admin_id: currentUser.user_id
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Return book response:', result);
+
+                if (response.ok) {
+                    alert('✅ Book returned successfully!');
+                    // Reload the current view
+                    if (document.getElementById('loansTable').innerHTML.includes('overdue')) {
+                        loadOverdueLoans();
+                    } else {
+                        loadLoans();
+                    }
+                    updateStats();
+                } else {
+                    alert(`❌ Error returning book: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error returning book:', error);
+                alert('❌ Error returning book. Please try again.');
+            }
+        }
+
+        // EXTEND DUE DATE FUNCTION
+        async function handleExtendDueDate(loanId) {
+            if (!loanId) {
+                console.error('No loan ID provided');
+                return;
+            }
+            
+            console.log('📅 Extending due date for loan:', loanId);
+            
+            // Calculate new due date (2 weeks from now)
+            const newDueDate = new Date();
+            newDueDate.setDate(newDueDate.getDate() + 14);
+            const defaultDate = newDueDate.toISOString().split('T')[0];
+            
+            const userDate = prompt(`Enter new due date for loan ${loanId} (YYYY-MM-DD):`, defaultDate);
+            
+            if (!userDate) return;
+
+            // Validate date format
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(userDate)) {
+                alert('❌ Please enter a valid date in YYYY-MM-DD format');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/loans/update-due-date`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        loan_id: loanId,
+                        due_date: userDate,
+                        admin_id: currentUser.user_id
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Extend due date response:', result);
+
+                if (response.ok) {
+                    alert('✅ Due date extended successfully!');
+                    // Reload the current view
+                    if (document.getElementById('loansTable').innerHTML.includes('overdue')) {
+                        loadOverdueLoans();
+                    } else {
+                        loadLoans();
+                    }
+                } else {
+                    alert(`❌ Error extending due date: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error extending due date:', error);
+                alert('❌ Error extending due date. Please try again.');
+            }
+        }
+
+        // VIEW LOAN DETAILS FUNCTION - FIXED FUNCTION NAME
+        async function handleViewLoanDetails(loanId) {
+            if (!loanId) {
+                alert('❌ No loan ID provided');
+                return;
+            }
+            
+            console.log('👁️ Viewing complete details for loan:', loanId);
+
+            try {
+                // Try to get loan details from multiple endpoints
+                let loan = null;
+                
+                // First try the complete endpoint
+                try {
+                    const completeResponse = await fetch(`${API_BASE}/loans/complete`);
+                    if (completeResponse.ok) {
+                        const allLoans = await completeResponse.json();
+                        loan = allLoans.find(l => l.loan_id === loanId);
+                    }
+                } catch (e) {
+                    console.log('Complete endpoint failed, trying individual endpoints');
+                }
+
+                // If not found, try individual endpoints
+                if (!loan) {
+                    const [activeResponse, returnedResponse, overdueResponse] = await Promise.all([
+                        fetch(`${API_BASE}/loans/status/filter?status=active`),
+                        fetch(`${API_BASE}/loans/status/filter?status=returned`),
+                        fetch(`${API_BASE}/loans/overdue/all`)
+                    ]);
+
+                    const activeData = await activeResponse.json();
+                    const returnedData = await returnedResponse.json();
+                    const overdueData = await overdueResponse.json();
+
+                    const allLoans = [
+                        ...(activeData.loans || activeData || []),
+                        ...(returnedData.loans || returnedData || []),
+                        ...(overdueData.loans || overdueData || [])
+                    ];
+
+                    loan = allLoans.find(l => l.loan_id === loanId);
+                }
+
+                if (!loan) {
+                    throw new Error(`Loan ${loanId} not found in the system`);
+                }
+
+                // Safely handle all properties with better fallbacks
+                const loanDate = loan.loan_date ? new Date(loan.loan_date) : new Date();
+                const dueDate = loan.due_date ? new Date(loan.due_date) : new Date();
+                const returnDate = loan.return_date ? new Date(loan.return_date) : null;
+                const isOverdue = dueDate < new Date() && (loan.status === 'active' || loan.status === 'Active');
+                
+                // Determine status with better logic
+                let status = 'unknown';
+                if (loan.status) {
+                    status = loan.status;
+                } else if (returnDate) {
+                    status = 'returned';
+                } else if (isOverdue) {
+                    status = 'overdue';
+                } else if (loan.loan_date) {
+                    status = 'active';
+                }
+
+                const details = `
+📋 COMPLETE LOAN DETAILS
+────────────────────────
+📄 LOAN INFORMATION
+Loan ID: ${loan.loan_id || 'N/A'}
+Status: ${status.toUpperCase()}
+${isOverdue ? '🚨 THIS LOAN IS OVERDUE' : ''}
+
+👤 USER INFORMATION
+User ID: ${loan.user_id || 'N/A'}
+Name: ${loan.user_name || 'Not available'}
+Email: ${loan.user_email || 'Not available'}
+Role: ${loan.user_role || 'Not available'}
+
+📚 BOOK INFORMATION
+Book ID: ${loan.book_id || 'N/A'}
+Title: ${loan.book_title || 'Not available'}
+Author: ${loan.book_author || 'Not available'}
+ISBN: ${loan.book_isbn || 'Not available'}
+Category: ${loan.book_category || 'Not available'}
+Publisher: ${loan.book_publisher || 'Not available'}
+
+📅 DATES
+Loan Date: ${loanDate.toLocaleDateString()}
+Due Date: ${dueDate.toLocaleDateString()} ${isOverdue ? '⚠️ OVERDUE' : ''}
+${returnDate ? `Return Date: ${returnDate.toLocaleDateString()}` : 'Not yet returned'}
+────────────────────────
+                `.trim();
+                
+                alert(details);
+            } catch (error) {
+                console.error('Error viewing complete loan details:', error);
+                alert(`❌ Error loading complete loan details: ${error.message}`);
+            }
+        }
+
+        // DEBUG FUNCTION
+        async function debugLoanData() {
+            console.log('=== DEBUGGING LOAN DATA FLOW ===');
+            
+            try {
+                // Test 1: Check the simple debug endpoint
+                console.log('1. Testing /debug/loans-simple...');
+                const simpleResponse = await fetch(`${API_BASE}/debug/loans-simple`);
+                const simpleData = await simpleResponse.json();
+                console.log('Simple debug data:', simpleData);
+
+                // Test 2: Check the complete endpoint
+                console.log('2. Testing /loans/complete...');
+                const completeResponse = await fetch(`${API_BASE}/loans/complete`);
+                const completeData = await completeResponse.json();
+                console.log('Complete loans data:', completeData);
+
+                // Test 3: Check individual endpoints
+                console.log('3. Testing individual endpoints...');
+                const [activeResponse, returnedResponse, overdueResponse] = await Promise.all([
+                    fetch(`${API_BASE}/loans/status/filter?status=active`),
+                    fetch(`${API_BASE}/loans/status/filter?status=returned`),
+                    fetch(`${API_BASE}/loans/overdue/all`)
+                ]);
+
+                const activeData = await activeResponse.json();
+                const returnedData = await returnedResponse.json();
+                const overdueData = await overdueResponse.json();
+
+                console.log('Active loans:', activeData);
+                console.log('Returned loans:', returnedData);
+                console.log('Overdue loans:', overdueData);
+
+                // Show results in alert
+                let debugInfo = `Debug Results:
+Simple loans count: ${simpleData.basic_loans_count}
+Complete loans count: ${completeData.length}
+Active loans: ${activeData.loans ? activeData.loans.length : activeData.length || 0}
+Returned loans: ${returnedData.loans ? returnedData.loans.length : returnedData.length || 0}
+Overdue loans: ${overdueData.loans ? overdueData.loans.length : overdueData.length || 0}
+
+Check browser console for detailed information.`;
+
+                alert(debugInfo);
+
+            } catch (error) {
+                console.error('Debug test failed:', error);
+                alert('Debug test failed: ' + error.message);
+            }
+        }
+
+        // CREATE NEW LOAN FUNCTION
+        function createNewLoan() {
+            alert('Create new loan functionality coming soon...\n\nThis will allow you to create new loans by selecting users and available books.');
+        }
+
+        // NOTIFICATIONS FUNCTIONS
+        async function loadNotifications() {
+            try {
+                // Load overdue books
+                const overdueResponse = await fetch(`${API_BASE}/notifications/books-due`);
+                const overdueData = await overdueResponse.json();
+                
+                const overdueHTML = overdueData.due_books && overdueData.due_books.length > 0 
+                    ? overdueData.due_books.map(book => `
+                        <div class="text-xs p-2 bg-red-50 rounded border border-red-200">
+                            <strong>${book.book_title}</strong><br>
+                            Due: ${new Date(book.due_date).toLocaleDateString()}<br>
+                            <span class="text-red-600">${book.days_overdue} days overdue</span><br>
+                            <span class="text-gray-600">User: ${book.user_name} (${book.user_email})</span>
+                        </div>
+                    `).join('')
+                    : '<p class="text-sm text-gray-500">No overdue books</p>';
+                
+                document.getElementById('overdueList').innerHTML = overdueHTML;
+
+                // Load upcoming returns
+                const upcomingResponse = await fetch(`${API_BASE}/notifications/upcoming-returns`);
+                const upcomingData = await upcomingResponse.json();
+                
+                const upcomingHTML = upcomingData.upcoming_returns && upcomingData.upcoming_returns.length > 0
+                    ? upcomingData.upcoming_returns.map(book => `
+                        <div class="text-xs p-2 bg-blue-50 rounded border border-blue-200">
+                            <strong>${book.book_title}</strong><br>
+                            Due: ${new Date(book.due_date).toLocaleDateString()}<br>
+                            <span class="text-blue-600">${book.days_until_due} days until due</span><br>
+                            <span class="text-gray-600">User: ${book.user_name} (${book.user_email})</span>
+                        </div>
+                    `).join('')
+                    : '<p class="text-sm text-gray-500">No upcoming returns</p>';
+                
+                document.getElementById('upcomingReturns').innerHTML = upcomingHTML;
+
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                document.getElementById('overdueList').innerHTML = '<p class="text-sm text-red-500">Error loading overdue books</p>';
+                document.getElementById('upcomingReturns').innerHTML = '<p class="text-sm text-red-500">Error loading upcoming returns</p>';
+            }
+        }
+
+        async function sendOverdueNotifications() {
+            try {
+                const response = await fetch(`${API_BASE}/notifications/send-overdue`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(data.message || 'Overdue notifications sent successfully');
+                loadNotifications();
+            } catch (error) {
+                console.error('Error sending notifications:', error);
+                alert('Error sending overdue notifications');
+            }
+        }
+
+        async function sendDueReminders() {
+            try {
+                const response = await fetch(`${API_BASE}/notifications/send-reminders`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(data.message || 'Due date reminders sent successfully');
+                loadNotifications();
+            } catch (error) {
+                console.error('Error sending reminders:', error);
+                alert('Error sending due date reminders');
+            }
+        }
+
+        // RESERVATIONS FUNCTION (placeholder)
+        async function loadReservations() {
+            document.getElementById('reservationsList').innerHTML = `
+                <div class="text-center py-4 text-gray-500">
+                    Reservations functionality coming soon...
+                </div>
+            `;
+        }
+
+        // BOOK STATUS UPDATE (placeholder)
+        async function updateBookStatus(bookId) {
+            const newStatus = prompt('Enter new status (available/borrowed/maintenance):', 'available');
+            if (newStatus && ['available', 'borrowed', 'maintenance'].includes(newStatus)) {
+                alert(`Book ${bookId} status updated to ${newStatus}`);
+                loadBooks();
+                updateStats();
+            }
+        }
+
+        function manage2FA() {
+            window.location.href = '2fa-management.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

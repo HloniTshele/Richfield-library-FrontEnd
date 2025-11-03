@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Richfield Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://cdn.briefly.co.za/images/720/6b4cbb0e53c53f0a.jpeg?v=1" alt="Logo" class="w-12 h-12 rounded">
+                <div>
+                    <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+                    <p class="text-blue-200">Richfield Library Management System</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="adminName" class="font-semibold">Loading...</span>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
+                <p id="totalUsers" class="text-3xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">Total Books</h3>
+                <p id="totalBooks" class="text-3xl font-bold text-green-600">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">Active Loans</h3>
+                <p id="activeLoans" class="text-3xl font-bold text-orange-600">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700">Overdue Books</h3>
+                <p id="overdueBooks" class="text-3xl font-bold text-red-600">0</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b">
+                <nav class="flex -mb-px">
+                    <button onclick="showTab('users')" class="tab-button py-4 px-6 border-b-2 font-medium text-sm" data-tab="users">Manage Users</button>
+                    <button onclick="showTab('books')" class="tab-button py-4 px-6 border-b-2 font-medium text-sm" data-tab="books">Manage Books</button>
+                    <button onclick="showTab('loans')" class="tab-button py-4 px-6 border-b-2 font-medium text-sm" data-tab="loans">Manage Loans</button>
+                    <button onclick="showTab('notifications')" class="tab-button py-4 px-6 border-b-2 font-medium text-sm" data-tab="notifications">Notifications</button>
+                    <button onclick="manage2FA()" class="tab-button py-4 px-6 border-b-2 font-medium text-sm">
+                        🔒 Manage 2FA
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">User Management</h2>
+                    <div class="flex space-x-2">
+                        <input type="text" id="userSearch" placeholder="Search users..." class="border rounded px-3 py-2">
+                        <button onclick="searchUsers()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Search</button>
+                        <button onclick="showUserModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Add User</button>
+                    </div>
+                </div>
+                
+                <!-- User Filters -->
+                <div class="flex space-x-4 mb-4">
+                    <button onclick="loadUsers()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">All Users</button>
+                    <button onclick="loadUsersByRole('student')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Students</button>
+                    <button onclick="loadUsersByRole('librarian')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">Librarians</button>
+                    <button onclick="loadUsersByRole('admin')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Admins</button>
+                    <button onclick="loadUsersWithOverdue()" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm">With Overdue</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="py-2 px-4 border">User ID</th>
+                                <th class="py-2 px-4 border">Name</th>
+                                <th class="py-2 px-4 border">Email</th>
+                                <th class="py-2 px-4 border">Role</th>
+                                <th class="py-2 px-4 border">Course/Dept</th>
+                                <th class="py-2 px-4 border">2FA</th>
+                                <th class="py-2 px-4 border">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Books Tab -->
+            <div id="books-tab" class="tab-content p-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Book Management</h2>
+                    <div class="flex space-x-2">
+                        <input type="text" id="bookSearch" placeholder="Search books..." class="border rounded px-3 py-2">
+                        <button onclick="searchBooks()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Search</button>
+                        <button onclick="showBookModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Add Book</button>
+                    </div>
+                </div>
+                
+                <!-- Book Filters -->
+                <div class="flex space-x-4 mb-4">
+                    <button onclick="loadBooks()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">All Books</button>
+                    <button onclick="loadBooksByStatus('available')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Available</button>
+                    <button onclick="loadBooksByStatus('borrowed')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm">Borrowed</button>
+                    <button onclick="loadBooksByCategory()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">By Category</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="py-2 px-4 border">Book ID</th>
+                                <th class="py-2 px-4 border">Title</th>
+                                <th class="py-2 px-4 border">Author</th>
+                                <th class="py-2 px-4 border">ISBN</th>
+                                <th class="py-2 px-4 border">Category</th>
+                                <th class="py-2 px-4 border">Status</th>
+                                <th class="py-2 px-4 border">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="booksTable">
+                            <!-- Books will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Loans Tab -->
+            <!-- Loans Tab -->
+<div id="loans-tab" class="tab-content p-6 hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Loan Management</h2>
+        <div class="flex space-x-2">
+            <button onclick="createNewLoan()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Create Loan</button>
+        </div>
+    </div>
+    
+    <!-- Loan Filters -->
+    <div class="flex space-x-4 mb-4">
+        <button onclick="loadLoans()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">All Loans</button>
+        <button onclick="loadLoansByStatus('active')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Active</button>
+        <button onclick="loadLoansByStatus('returned')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Returned</button>
+        <button onclick="loadOverdueLoans()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Overdue</button>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="py-2 px-4 border">Loan ID</th>
+                    <th class="py-2 px-4 border">User</th>
+                    <th class="py-2 px-4 border">Book</th>
+                    <th class="py-2 px-4 border">Loan Date</th>
+                    <th class="py-2 px-4 border">Due Date</th>
+                    <th class="py-2 px-4 border">Status</th>
+                    <th class="py-2 px-4 border">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="loansTable">
+                <!-- Loans will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="tab-content p-6 hidden">
+                <h2 class="text-xl font-bold mb-4">System Notifications</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-yellow-800 mb-2">Overdue Books</h3>
+                        <div id="overdueList" class="space-y-2">
+                            <!-- Overdue books will be loaded here -->
+                        </div>
+                        <button onclick="sendOverdueNotifications()" class="mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm">Send Reminders</button>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-800 mb-2">Upcoming Returns</h3>
+                        <div id="upcomingReturns" class="space-y-2">
+                            <!-- Upcoming returns will be loaded here -->
+                        </div>
+                        <button onclick="sendDueReminders()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Send Reminders</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- User Modal -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4" id="userModalTitle">Add User</h3>
+            <form id="userForm" onsubmit="saveUser(event)">
+                <input type="hidden" id="editUserId">
+                <div class="space-y-3">
+                    <input type="text" id="userName" placeholder="Full Name" class="w-full border rounded px-3 py-2" required>
+                    <input type="email" id="userEmail" placeholder="Email" class="w-full border rounded px-3 py-2" required>
+                    <input type="password" id="userPassword" placeholder="Password" class="w-full border rounded px-3 py-2" required>
+                    <select id="userRole" class="w-full border rounded px-3 py-2" required onchange="toggleRoleFields()">
+                        <option value="">Select Role</option>
+                        <option value="student">Student</option>
+                        <option value="librarian">Librarian</option>
+                        <option value="lecturer">Lecturer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <div id="courseField" class="hidden">
+                        <input type="text" id="userCourse" placeholder="Course" class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div id="departmentField" class="hidden">
+                        <input type="text" id="userDepartment" placeholder="Department" class="w-full border rounded px-3 py-2">
+                    </div>
+                    <input type="tel" id="userPhone" placeholder="Phone Number" class="w-full border rounded px-3 py-2">
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Book Modal -->
+<div id="bookModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-4" id="bookModalTitle">Add Book</h3>
+        <form id="bookForm" onsubmit="saveBook(event)">
+            <input type="hidden" id="editBookId">
+            <div class="space-y-3">
+                <input type="text" id="bookTitle" placeholder="Book Title" class="w-full border rounded px-3 py-2" required>
+                <input type="text" id="bookAuthor" placeholder="Author" class="w-full border rounded px-3 py-2" required>
+                <input type="text" id="bookIsbn" placeholder="ISBN" class="w-full border rounded px-3 py-2" required>
+                <input type="text" id="bookCategory" placeholder="Category" class="w-full border rounded px-3 py-2" required>
+                <input type="number" id="bookYear" placeholder="Publication Year" class="w-full border rounded px-3 py-2" min="1900" max="2030">
+                <input type="text" id="bookPublisher" placeholder="Publisher" class="w-full border rounded px-3 py-2">
+                <select id="bookStatus" class="w-full border rounded px-3 py-2" required>
+                    <option value="available">Available</option>
+                    <option value="borrowed">Borrowed</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button type="button" onclick="closeBookModal()" class="px-4 py-2 border rounded">Cancel</button>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let currentUser = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('user');
+            if (!userData) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(userData);
+            if (currentUser.role !== 'admin') {
+                window.location.href = `${currentUser.role}-dashboard.html`;
+                return;
+            }
+
+            document.getElementById('adminName').textContent = currentUser.name;
+            showTab('users');
+            loadDashboardData();
+        });
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-blue-500', 'text-blue-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            // Add to admin-dashboard.js, librarian-dashboard.js, student-dashboard.js
+              function manage2FA() {
+                  window.location.href = '2fa-management.html';
+              }
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            // Activate selected button
+            const activeButton = document.querySelector(`[data-tab="${tabName}"]`);
+            activeButton.classList.add('border-blue-500', 'text-blue-600');
+            activeButton.classList.remove('border-transparent', 'text-gray-500');
+
+            // Load tab-specific data
+            switch(tabName) {
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'books':
+                    loadBooks();
+                    break;
+                case 'loans':
+                    loadLoans();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Load all users
+                const usersResponse = await fetch(`${API_BASE}/user/all`);
+                const users = await usersResponse.json();
+                document.getElementById('totalUsers').textContent = users.length;
+
+                // Load all books
+                const booksResponse = await fetch(`${API_BASE}/books/all`);
+                const books = await booksResponse.json();
+                document.getElementById('totalBooks').textContent = books.length;
+
+                // Load overdue books
+                const overdueResponse = await fetch(`${API_BASE}/notifications/books-due`);
+                const overdueData = await overdueResponse.json();
+                document.getElementById('overdueBooks').textContent = overdueData.count || 0;
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // USER MANAGEMENT FUNCTIONS
+        async function loadUsers() {
+            try {
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading users...</td></tr>';
+                
+                const response = await fetch(`${API_BASE}/user/all`);
+                if (!response.ok) throw new Error('Failed to fetch users');
+                
+                const users = await response.json();
+                
+                if (users.length === 0) {
+                    document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">No users found</td></tr>';
+                    return;
+                }
+
+                displayUsers(users);
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading users</td></tr>';
+            }
+        }
+
+        async function loadUsersByRole(role) {
+            try {
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading users...</td></tr>';
+                
+                const response = await fetch(`${API_BASE}/user/role?role=${role}`);
+                if (!response.ok) throw new Error(`Failed to fetch ${role}s`);
+                
+                const data = await response.json();
+                
+                if (data.users && data.users.length > 0) {
+                    displayUsers(data.users);
+                } else {
+                    document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">No users found with this role</td></tr>';
+                }
+
+            } catch (error) {
+                console.error(`Error loading ${role}s:`, error);
+                document.getElementById('usersTable').innerHTML = `<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading ${role}s</td></tr>`;
+            }
+        }
+
+        async function loadUsersWithOverdue() {
+            try {
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading users with overdue books...</td></tr>';
+                
+                const response = await fetch(`${API_BASE}/user/with-overdue`);
+                if (!response.ok) throw new Error('Failed to fetch users with overdue books');
+                
+                const data = await response.json();
+                
+                if (data.users && data.users.length > 0) {
+                    const usersHTML = data.users.map(user => `
+                        <tr>
+                            <td class="py-2 px-4 border">${user.user_id}</td>
+                            <td class="py-2 px-4 border">${user.name}</td>
+                            <td class="py-2 px-4 border">${user.email}</td>
+                            <td class="py-2 px-4 border">
+                                <span class="px-2 py-1 rounded text-xs ${
+                                    user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                                    user.role === 'librarian' ? 'bg-purple-100 text-purple-800' :
+                                    user.role === 'lecturer' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-green-100 text-green-800'
+                                }">${user.role}</span>
+                            </td>
+                            <td class="py-2 px-4 border">-</td>
+                            <td class="py-2 px-4 border text-center">-</td>
+                            <td class="py-2 px-4 border">
+                                <span class="text-red-600 font-semibold">${user.overdue_books_count || 0} overdue</span>
+                                <button onclick="contactUser('${user.user_id}', '${user.email}')" class="ml-2 text-blue-600 hover:text-blue-800">Contact</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    
+                    document.getElementById('usersTable').innerHTML = usersHTML;
+                } else {
+                    document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">No users with overdue books</td></tr>';
+                }
+
+            } catch (error) {
+                console.error('Error loading users with overdue:', error);
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading users with overdue books</td></tr>';
+            }
+        }
+
+        function displayUsers(users) {
+            const usersHTML = users.map(user => `
+                <tr>
+                    <td class="py-2 px-4 border">${user.user_id}</td>
+                    <td class="py-2 px-4 border">${user.name}</td>
+                    <td class="py-2 px-4 border">${user.email}</td>
+                    <td class="py-2 px-4 border">
+                        <span class="px-2 py-1 rounded text-xs ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                            user.role === 'librarian' ? 'bg-purple-100 text-purple-800' :
+                            user.role === 'lecturer' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }">${user.role}</span>
+                    </td>
+                    <td class="py-2 px-4 border">${user.course || user.department || '-'}</td>
+                    <td class="py-2 px-4 border text-center">
+                        ${user.two_factor_enabled ? '✅' : '❌'}
+                    </td>
+                    <td class="py-2 px-4 border">
+                        <button onclick="editUser('${user.user_id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                        <button onclick="deleteUser('${user.user_id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('usersTable').innerHTML = usersHTML;
+        }
+
+        async function searchUsers() {
+            const searchTerm = document.getElementById('userSearch').value;
+            if (!searchTerm) {
+                loadUsers();
+                return;
+            }
+
+            try {
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Searching users...</td></tr>';
+                
+                const response = await fetch(`${API_BASE}/user/searchtext?search=${encodeURIComponent(searchTerm)}`);
+                if (!response.ok) throw new Error('Search failed');
+                
+                const data = await response.json();
+                
+                if (data.users && data.users.length > 0) {
+                    displayUsers(data.users);
+                } else {
+                    document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">No users found matching your search</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error searching users:', error);
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error searching users</td></tr>';
+            }
+        }
+
+        // BOOK MANAGEMENT FUNCTIONS
+// BOOK MANAGEMENT FUNCTIONS
+async function loadBooks() {
+    try {
+        document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading books...</td></tr>';
+        
+        const response = await fetch(`${API_BASE}/books/all`);
+        if (!response.ok) throw new Error('Failed to fetch books');
+        
+        const books = await response.json();
+        
+        if (books.length === 0) {
+            document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">No books found</td></tr>';
+            return;
+        }
+
+        displayBooks(books);
+
+    } catch (error) {
+        console.error('Error loading books:', error);
+        document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading books</td></tr>';
+    }
+}
+
+async function loadBooksByStatus(status) {
+    try {
+        document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading books...</td></tr>';
+        
+        const response = await fetch(`${API_BASE}/books/all`);
+        if (!response.ok) throw new Error('Failed to fetch books');
+        
+        const books = await response.json();
+        const filteredBooks = books.filter(book => book.status === status);
+        
+        if (filteredBooks.length > 0) {
+            displayBooks(filteredBooks);
+        } else {
+            document.getElementById('booksTable').innerHTML = `<tr><td colspan="7" class="text-center py-4">No ${status} books found</td></tr>`;
+        }
+
+    } catch (error) {
+        console.error(`Error loading ${status} books:`, error);
+        document.getElementById('booksTable').innerHTML = `<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading ${status} books</td></tr>`;
+    }
+}
+
+async function loadBooksByCategory() {
+    try {
+        document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading books by category...</td></tr>';
+        
+        const response = await fetch(`${API_BASE}/books/all`);
+        if (!response.ok) throw new Error('Failed to fetch books');
+        
+        const books = await response.json();
+        
+        // Group by category
+        const categories = {};
+        books.forEach(book => {
+            const category = book.category || 'Uncategorized';
+            if (!categories[category]) {
+                categories[category] = [];
+            }
+            categories[category].push(book);
+        });
+
+        let booksHTML = '';
+        Object.keys(categories).sort().forEach(category => {
+            booksHTML += `
+                <tr class="bg-gray-50">
+                    <td colspan="7" class="py-2 px-4 border font-semibold text-gray-700">${category} (${categories[category].length})</td>
+                </tr>
+            `;
+            booksHTML += categories[category].map(book => `
+                <tr>
+                    <td class="py-2 px-4 border">${book.book_id}</td>
+                    <td class="py-2 px-4 border">${book.title}</td>
+                    <td class="py-2 px-4 border">${book.author}</td>
+                    <td class="py-2 px-4 border">${book.isbn || '-'}</td>
+                    <td class="py-2 px-4 border">${book.category || 'Uncategorized'}</td>
+                    <td class="py-2 px-4 border">
+                        <span class="px-2 py-1 rounded text-xs ${
+                            book.status === 'available' ? 'bg-green-100 text-green-800' :
+                            book.status === 'borrowed' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                        }">${book.status}</span>
+                    </td>
+                    <td class="py-2 px-4 border">
+                        <button onclick="editBook('${book.book_id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                        <button onclick="deleteBook('${book.book_id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        });
+        
+        document.getElementById('booksTable').innerHTML = booksHTML;
+
+    } catch (error) {
+        console.error('Error loading books by category:', error);
+        document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading books by category</td></tr>';
+    }
+}
+function manage2FA() {
+    window.location.href = '2fa-management.html';
+}
+
+function displayBooks(books) {
+    const booksHTML = books.map(book => `
+        <tr>
+            <td class="py-2 px-4 border">${book.book_id}</td>
+            <td class="py-2 px-4 border">${book.title}</td>
+            <td class="py-2 px-4 border">${book.author}</td>
+            <td class="py-2 px-4 border">${book.isbn || '-'}</td>
+            <td class="py-2 px-4 border">${book.category || 'Uncategorized'}</td>
+            <td class="py-2 px-4 border">
+                <span class="px-2 py-1 rounded text-xs ${
+                    book.status === 'available' ? 'bg-green-100 text-green-800' :
+                    book.status === 'borrowed' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                }">${book.status}</span>
+            </td>
+            <td class="py-2 px-4 border">
+                <button onclick="editBook('${book.book_id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                <button onclick="deleteBook('${book.book_id}')" class="text-red-600 hover:text-red-800">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('booksTable').innerHTML = booksHTML;
+}
+
+async function searchBooks() {
+    const searchTerm = document.getElementById('bookSearch').value;
+    if (!searchTerm) {
+        loadBooks();
+        return;
+    }
+
+    try {
+        document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">Searching books...</td></tr>';
+        
+        const response = await fetch(`${API_BASE}/books/searchtext?search=${encodeURIComponent(searchTerm)}`);
+        if (!response.ok) throw new Error('Search failed');
+        
+        const data = await response.json();
+        
+        if (data.books && data.books.length > 0) {
+            displayBooks(data.books);
+        } else {
+            document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4">No books found matching your search</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error searching books:', error);
+        document.getElementById('booksTable').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Error searching books</td></tr>';
+    }
+}
+
+// EDIT BOOK FUNCTIONALITY
+async function editBook(bookId) {
+    try {
+        console.log('Fetching book details for:', bookId);
+        
+        const response = await fetch(`${API_BASE}/books/id?id=${bookId}`);
+        
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}: `;
+            try {
+                const errorData = await response.json();
+                errorMessage += errorData.error || errorData.message || 'Unknown error';
+            } catch (parseError) {
+                errorMessage += await response.text() || 'Failed to parse error response';
+            }
+            throw new Error(errorMessage);
+        }
+
+        const book = await response.json();
+        console.log('Book data loaded successfully:', book);
+
+        // Populate the modal with book data
+        document.getElementById('bookModalTitle').textContent = 'Edit Book';
+        document.getElementById('editBookId').value = book.book_id;
+        document.getElementById('bookTitle').value = book.title || '';
+        document.getElementById('bookAuthor').value = book.author || '';
+        document.getElementById('bookIsbn').value = book.isbn || '';
+        document.getElementById('bookCategory').value = book.category || '';
+        document.getElementById('bookYear').value = book.publication_year || '';
+        document.getElementById('bookPublisher').value = book.publisher || '';
+        document.getElementById('bookStatus').value = book.status || 'available';
+
+        // Show the modal
+        document.getElementById('bookModal').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error loading book details:', error);
+        
+        let errorMsg = `Unable to load book details automatically. `;
+        
+        if (error.message.includes('400')) {
+            errorMsg += `The server rejected the request. Book ID format may be incorrect.`;
+        } else if (error.message.includes('404')) {
+            errorMsg += `Book not found. The book ID ${bookId} may not exist.`;
+        } else {
+            errorMsg += `Error: ${error.message}`;
+        }
+        
+        alert(errorMsg);
+        
+        // Fallback: Show modal with basic info
+        document.getElementById('bookModalTitle').textContent = 'Edit Book';
+        document.getElementById('editBookId').value = bookId;
+        document.getElementById('bookModal').classList.remove('hidden');
+    }
+}
+
+// DELETE BOOK FUNCTIONALITY
+async function deleteBook(bookId) {
+    if (!confirm(`Are you sure you want to delete book ${bookId}? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/books/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                id: bookId
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`Book deleted successfully!`);
+            loadBooks(); // Refresh the book list
+        } else {
+            alert(`Error deleting book: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error deleting book:', error);
+        alert('Error deleting book. Please try again.');
+    }
+}
+
+// SAVE BOOK FUNCTIONALITY
+async function saveBook(event) {
+    event.preventDefault();
+
+    const bookId = document.getElementById('editBookId').value;
+    const isEdit = !!bookId;
+    
+    const bookData = {
+        title: document.getElementById('bookTitle').value,
+        author: document.getElementById('bookAuthor').value,
+        isbn: document.getElementById('bookIsbn').value,
+        category: document.getElementById('bookCategory').value,
+        status: document.getElementById('bookStatus').value
+    };
+
+    // Add optional fields if provided
+    const year = document.getElementById('bookYear').value;
+    const publisher = document.getElementById('bookPublisher').value;
+    
+    if (year) bookData.publication_year = parseInt(year);
+    if (publisher) bookData.publisher = publisher;
+
+    // Add ID for edit operations
+    if (isEdit) {
+        bookData.id = bookId;
+    }
+
+    try {
+        let response;
+        if (isEdit) {
+            // Edit existing book
+            response = await fetch(`${API_BASE}/books/update`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(bookData)
+            });
+        } else {
+            // Create new book - you'll need to implement this endpoint
+            response = await fetch(`${API_BASE}/books/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(bookData)
+            });
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        alert(isEdit ? 'Book updated successfully!' : 'Book created successfully!');
+        closeBookModal();
+        loadBooks(); // Refresh the book list
+        
+    } catch (error) {
+        console.error('Error saving book:', error);
+        alert(`Error saving book: ${error.message}`);
+    }
+}
+
+// BOOK MODAL FUNCTIONS
+function showBookModal() {
+    document.getElementById('bookModal').classList.remove('hidden');
+    document.getElementById('bookModalTitle').textContent = 'Add Book';
+    document.getElementById('bookForm').reset();
+    document.getElementById('editBookId').value = '';
+    document.getElementById('bookStatus').value = 'available';
+}
+
+function closeBookModal() {
+    document.getElementById('bookModal').classList.add('hidden');
+}
+
+// ADD BOOK FUNCTIONALITY (if you implement the create endpoint)
+async function addBook(bookData) {
+    try {
+        const response = await fetch(`${API_BASE}/books/create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(bookData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create book');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error adding book:', error);
+        throw error;
+    }
+}
+        // EDIT BOOK FUNCTIONALITY
+async function editUser(userId) {
+    try {
+        console.log('Fetching user details for:', userId);
+        
+        const response = await fetch(`${API_BASE}/user/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}: `;
+            
+            // Try to get detailed error message from response
+            try {
+                const errorData = await response.json();
+                errorMessage += errorData.error || errorData.message || 'Unknown error';
+            } catch (parseError) {
+                errorMessage += await response.text() || 'Failed to parse error response';
+            }
+            
+            throw new Error(errorMessage);
+        }
+
+        const user = await response.json();
+        console.log('User data loaded successfully:', user);
+
+        // Populate the modal with user data
+        document.getElementById('userModalTitle').textContent = 'Edit User';
+        document.getElementById('editUserId').value = user.user_id;
+        document.getElementById('userName').value = user.name || '';
+        document.getElementById('userEmail').value = user.email || '';
+        document.getElementById('userPassword').value = ''; // Don't pre-fill password
+        document.getElementById('userPassword').placeholder = 'Leave blank to keep current password';
+        document.getElementById('userPassword').required = false;
+        document.getElementById('userRole').value = user.role || '';
+        document.getElementById('userPhone').value = user.phone || user.phone_number || '';
+
+        // Set role-specific fields
+        toggleRoleFields();
+        if (user.role === 'student') {
+            document.getElementById('userCourse').value = user.course || '';
+        } else if (['librarian', 'lecturer', 'admin'].includes(user.role)) {
+            document.getElementById('userDepartment').value = user.department || '';
+        }
+
+        // Show the modal
+        document.getElementById('userModal').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error loading user details:', error);
+        
+        // More detailed error message
+        let errorMsg = `Unable to load user details automatically. `;
+        
+        if (error.message.includes('400')) {
+            errorMsg += `The server rejected the request. This usually means the user ID format is incorrect or the endpoint is not properly configured.`;
+        } else if (error.message.includes('404')) {
+            errorMsg += `User not found. The user ID ${userId} may not exist.`;
+        } else if (error.message.includes('500')) {
+            errorMsg += `Server error. Please check the backend logs.`;
+        } else {
+            errorMsg += `Error: ${error.message}`;
+        }
+        
+        alert(errorMsg);
+        
+        // Fallback: Show modal with basic info
+        document.getElementById('userModalTitle').textContent = 'Edit User';
+        document.getElementById('editUserId').value = userId;
+        document.getElementById('userPassword').placeholder = 'Leave blank to keep current password';
+        document.getElementById('userPassword').required = false;
+        
+        document.getElementById('userModal').classList.remove('hidden');
+    }
+}
+        // DELETE BOOK FUNCTIONALITY
+        async function deleteBook(bookId) {
+            if (!confirm(`Are you sure you want to delete book ${bookId}? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/books/delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        id: bookId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Book deleted successfully!`);
+                    loadBooks(); // Refresh the book list
+                } else {
+                    alert(`Error deleting book: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting book:', error);
+                alert('Error deleting book');
+            }
+        }
+
+        // SAVE BOOK FUNCTIONALITY
+        async function saveBook(event) {
+            event.preventDefault();
+
+            const bookId = document.getElementById('editBookId').value;
+            const isEdit = !!bookId;
+            
+            const bookData = {
+                title: document.getElementById('bookTitle').value,
+                author: document.getElementById('bookAuthor').value,
+                isbn: document.getElementById('bookIsbn').value,
+                category: document.getElementById('bookCategory').value,
+                publication_year: document.getElementById('bookYear').value,
+                publisher: document.getElementById('bookPublisher').value,
+                status: document.getElementById('bookStatus').value
+            };
+
+            // Add ID for edit operations
+            if (isEdit) {
+                bookData.id = bookId;
+            }
+
+            try {
+                let response;
+                if (isEdit) {
+                    // Edit existing book
+                    response = await fetch(`${API_BASE}/books/update`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify(bookData)
+                    });
+                } else {
+                    // Create new book - you'll need to implement this endpoint
+                    response = await fetch(`${API_BASE}/books/create`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify(bookData)
+                    });
+                }
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(isEdit ? 'Book updated successfully!' : 'Book created successfully!');
+                    closeBookModal();
+                    loadBooks(); // Refresh the book list
+                } else {
+                    alert(`Error: ${result.error || 'Unknown error occurred'}`);
+                }
+            } catch (error) {
+                console.error('Error saving book:', error);
+                alert('Error saving book');
+            }
+        }
+
+        // BOOK MODAL FUNCTIONS
+        function showBookModal() {
+            document.getElementById('bookModal').classList.remove('hidden');
+            document.getElementById('bookModalTitle').textContent = 'Add Book';
+            document.getElementById('bookForm').reset();
+            document.getElementById('editBookId').value = '';
+        }
+
+        function closeBookModal() {
+            document.getElementById('bookModal').classList.add('hidden');
+        }
+
+        // USER MANAGEMENT FUNCTIONS (from previous implementation)
+        function toggleRoleFields() {
+            const role = document.getElementById('userRole').value;
+            const courseField = document.getElementById('courseField');
+            const departmentField = document.getElementById('departmentField');
+            
+            if (role === 'student') {
+                courseField.classList.remove('hidden');
+                departmentField.classList.add('hidden');
+            } else if (role === 'librarian' || role === 'lecturer' || role === 'admin') {
+                courseField.classList.add('hidden');
+                departmentField.classList.remove('hidden');
+            } else {
+                courseField.classList.add('hidden');
+                departmentField.classList.add('hidden');
+            }
+        }
+
+        async function editUser(userId) {
+            try {
+                console.log('Fetching user details for:', userId);
+                
+                const response = await fetch(`${API_BASE}/user/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const user = await response.json();
+                console.log('User data loaded:', user);
+
+                // Populate the modal with user data
+                document.getElementById('userModalTitle').textContent = 'Edit User';
+                document.getElementById('editUserId').value = user.user_id;
+                document.getElementById('userName').value = user.name || '';
+                document.getElementById('userEmail').value = user.email || '';
+                document.getElementById('userPassword').value = '';
+                document.getElementById('userPassword').placeholder = 'Leave blank to keep current password';
+                document.getElementById('userPassword').required = false;
+                document.getElementById('userRole').value = user.role || '';
+                document.getElementById('userPhone').value = user.phone || user.phone_number || '';
+
+                // Set role-specific fields
+                toggleRoleFields();
+                if (user.role === 'student') {
+                    document.getElementById('userCourse').value = user.course || '';
+                } else if (['librarian', 'lecturer', 'admin'].includes(user.role)) {
+                    document.getElementById('userDepartment').value = user.department || '';
+                }
+
+                document.getElementById('userModal').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error loading user details:', error);
+                alert(`Unable to load user details automatically. Please fill the form manually. Error: ${error.message}`);
+                
+                document.getElementById('userModalTitle').textContent = 'Edit User';
+                document.getElementById('editUserId').value = userId;
+                document.getElementById('userPassword').placeholder = 'Leave blank to keep current password';
+                document.getElementById('userPassword').required = false;
+                document.getElementById('userModal').classList.remove('hidden');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm(`Are you sure you want to delete user ${userId}? This action cannot be undone and will remove all user data including loans and reservations.`)) {
+                return;
+            }
+
+            try {
+                const adminUser = JSON.parse(localStorage.getItem('user'));
+                
+                const response = await fetch(`${API_BASE}/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        admin_id: adminUser.user_id
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    let successMessage = `User deleted successfully.`;
+                    if (result.related_records_deleted) {
+                        successMessage += ` Removed ${result.related_records_deleted.loans} loans, ${result.related_records_deleted.reservations} reservations, and ${result.related_records_deleted.recommendations} recommendations.`;
+                    }
+                    alert(successMessage);
+                    loadUsers();
+                } else {
+                    alert(`Error deleting user: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user');
+            }
+        }
+
+async function saveUser(event) {
+    event.preventDefault();
+
+    const userId = document.getElementById('editUserId').value;
+    const isEdit = !!userId;
+    const currentAdmin = JSON.parse(localStorage.getItem('user'));
+    
+    const userData = {
+        name: document.getElementById('userName').value,
+        email: document.getElementById('userEmail').value,
+        role: document.getElementById('userRole').value,
+        phone: document.getElementById('userPhone').value
+    };
+
+    if (isEdit) {
+        userData.user_id = userId;
+        userData.editor_id = currentAdmin.user_id;
+    }
+
+    const password = document.getElementById('userPassword').value;
+    // Only include password if it's provided (not empty)
+    if (password && password.trim() !== '') {
+        userData.password = password;
+    }
+
+    if (userData.role === 'student') {
+        userData.course = document.getElementById('userCourse').value;
+    } else if (['librarian', 'lecturer', 'admin'].includes(userData.role)) {
+        userData.department = document.getElementById('userDepartment').value;
+    }
+
+    try {
+        let response;
+        if (isEdit) {
+            response = await fetch(`${API_BASE}/editUsers/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(userData)
+            });
+        } else {
+            response = await fetch(`${API_BASE}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(userData)
+            });
+        }
+
+        const result = await response.json();
+
+        if (response.ok) {
+            let successMessage = isEdit ? 'User updated successfully!' : 'User created successfully!';
+            if (result.password_updated) {
+                successMessage += ' Password was updated.';
+            }
+            alert(successMessage);
+            closeUserModal();
+            loadUsers();
+            if (!isEdit) {
+                loadDashboardData();
+            }
+        } else {
+            alert(`Error: ${result.error || 'Unknown error occurred'}`);
+        }
+    } catch (error) {
+        console.error('Error saving user:', error);
+        alert('Error saving user');
+    }
+}
+        function showUserModal() {
+            document.getElementById('userModal').classList.remove('hidden');
+            document.getElementById('userModalTitle').textContent = 'Add User';
+            document.getElementById('userForm').reset();
+            document.getElementById('editUserId').value = '';
+            document.getElementById('userPassword').required = true;
+            document.getElementById('userPassword').placeholder = 'Password';
+            document.getElementById('courseField').classList.add('hidden');
+            document.getElementById('departmentField').classList.add('hidden');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+            document.getElementById('userPassword').required = true;
+            document.getElementById('userPassword').placeholder = 'Password';
+        }
+
+        function contactUser(userId, email) {
+            alert(`Contacting user ${userId} at ${email} about their overdue books`);
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+
+        // Rest of the functions (loadLoans, loadNotifications, etc.)
+        // LOAN MANAGEMENT FUNCTIONS
+async function loadLoans() {
+    try {
+        document.getElementById('loansTable').innerHTML = '<tr><td colspan="8" class="text-center py-4">Loading loans...</td></tr>';
+        
+        const response = await fetch(`${API_BASE}/loans/all`);
+        if (!response.ok) throw new Error('Failed to fetch loans');
+        
+        const data = await response.json();
+        
+        if (data.loans && data.loans.length === 0) {
+            document.getElementById('loansTable').innerHTML = '<tr><td colspan="8" class="text-center py-4">No loans found</td></tr>';
+            return;
+        }
+
+        displayLoans(data.loans || data);
+
+    } catch (error) {
+        console.error('Error loading loans:', error);
+        document.getElementById('loansTable').innerHTML = '<tr><td colspan="8" class="text-center py-4 text-red-500">Error loading loans</td></tr>';
+    }
+}
+
+async function loadLoansByStatus(status) {
+    try {
+        document.getElementById('loansTable').innerHTML = `<tr><td colspan="8" class="text-center py-4">Loading ${status} loans...</td></tr>`;
+        
+        const response = await fetch(`${API_BASE}/loans/status/filter?status=${status}`);
+        if (!response.ok) throw new Error(`Failed to fetch ${status} loans`);
+        
+        const data = await response.json();
+        
+        if (data.loans && data.loans.length > 0) {
+            displayLoans(data.loans);
+        } else {
+            document.getElementById('loansTable').innerHTML = `<tr><td colspan="8" class="text-center py-4">No ${status} loans found</td></tr>`;
+        }
+
+    } catch (error) {
+        console.error(`Error loading ${status} loans:`, error);
+        document.getElementById('loansTable').innerHTML = `<tr><td colspan="8" class="text-center py-4 text-red-500">Error loading ${status} loans</td></tr>`;
+    }
+}
+
+async function loadOverdueLoans() {
+    try {
+        document.getElementById('loansTable').innerHTML = '<tr><td colspan="8" class="text-center py-4">Loading overdue loans...</td></tr>';
+        
+        const response = await fetch(`${API_BASE}/loans/overdue/all`);
+        if (!response.ok) throw new Error('Failed to fetch overdue loans');
+        
+        const data = await response.json();
+        
+        if (data.loans && data.loans.length > 0) {
+            displayLoans(data.loans);
+        } else {
+            document.getElementById('loansTable').innerHTML = '<tr><td colspan="8" class="text-center py-4">No overdue loans found</td></tr>';
+        }
+
+    } catch (error) {
+        console.error('Error loading overdue loans:', error);
+        document.getElementById('loansTable').innerHTML = '<tr><td colspan="8" class="text-center py-4 text-red-500">Error loading overdue loans</td></tr>';
+    }
+}
+
+function displayLoans(loans) {
+    const loansHTML = loans.map(loan => `
+        <tr>
+            <td class="py-2 px-4 border">${loan.loan_id}</td>
+            <td class="py-2 px-4 border">
+                <div class="font-semibold">${loan.user_name || 'Unknown User'}</div>
+                <div class="text-sm text-gray-600">${loan.user_email || 'No email'}</div>
+                <div class="text-xs text-gray-500">ID: ${loan.user_id}</div>
+            </td>
+            <td class="py-2 px-4 border">
+                <div class="font-semibold">${loan.book_title || 'Unknown Book'}</div>
+                <div class="text-sm text-gray-600">by ${loan.book_author || 'Unknown Author'}</div>
+                <div class="text-xs text-gray-500">ID: ${loan.book_id}</div>
+            </td>
+            <td class="py-2 px-4 border">${new Date(loan.loan_date).toLocaleDateString()}</td>
+            <td class="py-2 px-4 border">
+                <span class="${new Date(loan.due_date) < new Date() && loan.status === 'active' ? 'text-red-600 font-semibold' : ''}">
+                    ${new Date(loan.due_date).toLocaleDateString()}
+                </span>
+            </td>
+            <td class="py-2 px-4 border">
+                <span class="px-2 py-1 rounded text-xs ${
+                    loan.status === 'active' ? 
+                        (new Date(loan.due_date) < new Date() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800') :
+                    loan.status === 'returned' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                }">
+                    ${loan.status}${new Date(loan.due_date) < new Date() && loan.status === 'active' ? ' (OVERDUE)' : ''}
+                </span>
+                ${loan.return_date ? `<div class="text-xs text-gray-600 mt-1">Returned: ${new Date(loan.return_date).toLocaleDateString()}</div>` : ''}
+            </td>
+            <td class="py-2 px-4 border">
+                ${loan.status === 'active' ? `
+                    <button onclick="returnBook('${loan.loan_id}')" class="text-green-600 hover:text-green-800 mr-2">Return</button>
+                    <button onclick="extendDueDate('${loan.loan_id}')" class="text-blue-600 hover:text-blue-800 mr-2">Extend</button>
+                ` : ''}
+                <button onclick="viewLoanDetails('${loan.loan_id}')" class="text-purple-600 hover:text-purple-800 mr-2">View</button>
+                <button onclick="deleteLoan('${loan.loan_id}')" class="text-red-600 hover:text-red-800">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('loansTable').innerHTML = loansHTML;
+}
+
+// Loan Actions
+async function returnBook(loanId) {
+    if (!confirm('Mark this book as returned?')) return;
+
+    try {
+        const adminUser = JSON.parse(localStorage.getItem('user'));
+        
+        const response = await fetch(`${API_BASE}/loans/return`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                loan_id: loanId,
+                admin_id: adminUser.user_id
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Book returned successfully!');
+            loadLoans(); // Refresh the loans list
+        } else {
+            alert(`Error returning book: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error returning book:', error);
+        alert('Error returning book');
+    }
+}
+
+async function extendDueDate(loanId) {
+    const newDueDate = prompt('Enter new due date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+    
+    if (!newDueDate) return;
+
+    try {
+        const adminUser = JSON.parse(localStorage.getItem('user'));
+        
+        const response = await fetch(`${API_BASE}/loans/update-due-date`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                loan_id: loanId,
+                due_date: newDueDate,
+                admin_id: adminUser.user_id
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Due date extended successfully!');
+            loadLoans(); // Refresh the loans list
+        } else {
+            alert(`Error extending due date: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error extending due date:', error);
+        alert('Error extending due date');
+    }
+}
+
+async function viewLoanDetails(loanId) {
+    try {
+        const response = await fetch(`${API_BASE}/loans/${loanId}`);
+        if (!response.ok) throw new Error('Failed to fetch loan details');
+        
+        const data = await response.json();
+        const loan = data.loan || data;
+        
+        const details = `
+Loan ID: ${loan.loan_id}
+User: ${loan.user_name} (${loan.user_email})
+Book: ${loan.book_title} by ${loan.book_author}
+Loan Date: ${new Date(loan.loan_date).toLocaleDateString()}
+Due Date: ${new Date(loan.due_date).toLocaleDateString()}
+Status: ${loan.status}
+${loan.return_date ? `Return Date: ${new Date(loan.return_date).toLocaleDateString()}` : ''}
+${loan.book_isbn ? `ISBN: ${loan.book_isbn}` : ''}
+        `.trim();
+        
+        alert(details);
+    } catch (error) {
+        console.error('Error viewing loan details:', error);
+        alert('Error loading loan details');
+    }
+}
+
+async function deleteLoan(loanId) {
+    if (!confirm('Are you sure you want to delete this loan record? This action cannot be undone.')) return;
+
+    try {
+        const adminUser = JSON.parse(localStorage.getItem('user'));
+        
+        const response = await fetch(`${API_BASE}/loans/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                loan_id: loanId,
+                admin_id: adminUser.user_id
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Loan record deleted successfully!');
+            loadLoans(); // Refresh the loans list
+        } else {
+            alert(`Error deleting loan: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error deleting loan:', error);
+        alert('Error deleting loan record');
+    }
+}
+
+// Create New Loan
+async function createNewLoan() {
+    const user_id = prompt('Enter User ID:');
+    const book_id = prompt('Enter Book ID:');
+    const due_date = prompt('Enter Due Date (YYYY-MM-DD):', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    
+    if (!user_id || !book_id || !due_date) return;
+
+    try {
+        const adminUser = JSON.parse(localStorage.getItem('user'));
+        
+        const response = await fetch(`${API_BASE}/loans/create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                user_id: user_id,
+                book_id: book_id,
+                due_date: due_date,
+                admin_id: adminUser.user_id
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Loan created successfully!');
+            loadLoans(); // Refresh the loans list
+        } else {
+            alert(`Error creating loan: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error creating loan:', error);
+        alert('Error creating loan');
+    }
+}
+
+        async function loadNotifications() {
+            try {
+                const overdueResponse = await fetch(`${API_BASE}/notifications/books-due`);
+                const overdueData = await overdueResponse.json();
+                
+                const overdueHTML = overdueData.due_books && overdueData.due_books.length > 0 
+                    ? overdueData.due_books.map(book => `
+                        <div class="text-sm">
+                            <strong>${book.book_title}</strong> - Due: ${new Date(book.due_date).toLocaleDateString()}
+                            <br><span class="text-red-600">${book.days_overdue} days overdue</span>
+                        </div>
+                    `).join('')
+                    : '<p class="text-sm">No overdue books</p>';
+                
+                document.getElementById('overdueList').innerHTML = overdueHTML;
+
+                const upcomingResponse = await fetch(`${API_BASE}/notifications/upcoming-returns`);
+                const upcomingData = await upcomingResponse.json();
+                
+                const upcomingHTML = upcomingData.upcoming_returns && upcomingData.upcoming_returns.length > 0
+                    ? upcomingData.upcoming_returns.map(book => `
+                        <div class="text-sm">
+                            <strong>${book.book_title}</strong> - Due: ${new Date(book.due_date).toLocaleDateString()}
+                            <br><span class="text-blue-600">${book.days_until_due} days until due</span>
+                        </div>
+                    `).join('')
+                    : '<p class="text-sm">No upcoming returns</p>';
+                
+                document.getElementById('upcomingReturns').innerHTML = upcomingHTML;
+
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        async function sendOverdueNotifications() {
+            try {
+                const response = await fetch(`${API_BASE}/notifications/send-overdue`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(data.message || 'Notifications sent successfully');
+                loadNotifications();
+            } catch (error) {
+                console.error('Error sending notifications:', error);
+                alert('Error sending notifications');
+            }
+        }
+
+        async function sendDueReminders() {
+            try {
+                const response = await fetch(`${API_BASE}/notifications/send-reminders`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(data.message || 'Reminders sent successfully');
+                loadNotifications();
+            } catch (error) {
+                console.error('Error sending reminders:', error);
+                alert('Error sending reminders');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Two-Factor Authentication - Richfield Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/x-icon" href="https://cdn.briefly.co.za/images/720/6b4cbb0e53c53f0a.jpeg?v=1">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://cdn.briefly.co.za/images/720/6b4cbb0e53c53f0a.jpeg?v=1" alt="Logo" class="w-12 h-12 rounded">
+                <div>
+                    <h1 class="text-2xl font-bold">Two-Factor Authentication</h1>
+                    <p class="text-blue-200">Richfield Library Management System</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="userName" class="font-semibold">Loading...</span>
+                <span id="userRole" class="px-3 py-1 rounded-full text-xs bg-blue-600"></span>
+                <button onclick="goBackToDashboard()" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition">Back to Dashboard</button>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Current Status Card -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Two-Factor Authentication Status</h2>
+                    <p class="text-gray-600 mt-2">Enhance your account security with 2FA</p>
+                </div>
+                <div id="currentStatus" class="text-right">
+                    <!-- Status will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Enable 2FA Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-green-800">Enable Two-Factor Authentication</h3>
+                </div>
+                
+                <div class="space-y-4">
+                    <p class="text-gray-600">
+                        Protect your account by enabling two-factor authentication. You'll need to verify your identity using an authenticator app when signing in.
+                    </p>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-800 mb-2">Benefits:</h4>
+                        <ul class="text-sm text-green-700 space-y-1">
+                            <li>• Extra layer of security for your account</li>
+                            <li>• Protection against unauthorized access</li>
+                            <li>• Required for sensitive operations</li>
+                            <li>• Peace of mind knowing your account is secure</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="enable2FA()" id="enable2FABtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                        Enable 2FA
+                    </button>
+                </div>
+            </div>
+
+            <!-- Disable 2FA Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-red-800">Disable Two-Factor Authentication</h3>
+                </div>
+                
+                <div class="space-y-4">
+                    <p class="text-gray-600">
+                        If you no longer wish to use two-factor authentication, you can disable it here. This will make your account less secure.
+                    </p>
+                    
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-red-800 mb-2">Warning:</h4>
+                        <ul class="text-sm text-red-700 space-y-1">
+                            <li>• Your account will be less secure</li>
+                            <li>• No verification required for login</li>
+                            <li>• Not recommended for admin accounts</li>
+                            <li>• Consider the security implications</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="disable2FA()" id="disable2FABtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                        Disable 2FA
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2FA Instructions -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
+            <h3 class="text-lg font-bold text-blue-800 mb-4">How Two-Factor Authentication Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-blue-600 font-bold">1</span>
+                    </div>
+                    <h4 class="font-semibold text-blue-800 mb-2">Scan QR Code</h4>
+                    <p class="text-sm text-blue-700">Use Google Authenticator or Authy to scan the QR code</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-blue-600 font-bold">2</span>
+                    </div>
+                    <h4 class="font-semibold text-blue-800 mb-2">Enter Code</h4>
+                    <p class="text-sm text-blue-700">Enter the 6-digit code from your authenticator app</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-blue-600 font-bold">3</span>
+                    </div>
+                    <h4 class="font-semibold text-blue-800 mb-2">Secure Login</h4>
+                    <p class="text-sm text-blue-700">Use the code each time you login for extra security</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 2FA Enable Modal -->
+    <div id="enable2FAModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-4 text-green-800">Enable Two-Factor Authentication</h3>
+            
+            <!-- Step 1: QR Code -->
+            <div id="2faStep1" class="space-y-6">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800 mb-2">Step 1: Download Authenticator App</h4>
+                    <p class="text-sm text-green-700">If you don't have one already, download an authenticator app:</p>
+                    <div class="flex space-x-4 mt-3">
+                        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-2 px-3 rounded text-sm">
+                            Google Authenticator (Android)
+                        </a>
+                        <a href="https://apps.apple.com/us/app/google-authenticator/id388497605" target="_blank" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-2 px-3 rounded text-sm">
+                            Google Authenticator (iOS)
+                        </a>
+                        <a href="https://authy.com/download/" target="_blank" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-2 px-3 rounded text-sm">
+                            Authy (Multi-platform)
+                        </a>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Step 2: Scan QR Code</h4>
+                        <p class="text-gray-600 mb-4">Open your authenticator app and scan this QR code:</p>
+                        <div class="flex justify-center">
+                            <img id="qrCodeImage" src="" alt="QR Code" class="border-2 border-green-300 rounded-lg p-2 bg-white max-w-xs">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Step 3: Backup Information</h4>
+                        
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <h5 class="font-semibold text-yellow-800 mb-2">Manual Entry</h5>
+                            <p class="text-sm text-yellow-700 mb-2">If you can't scan the QR code, enter this secret key manually:</p>
+                            <div class="bg-white border border-yellow-300 rounded p-3">
+                                <code id="secretKey" class="text-sm font-mono break-all"></code>
+                                <button onclick="copySecretKey()" class="mt-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-1 px-2 rounded">
+                                    Copy Secret Key
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h5 class="font-semibold text-blue-800 mb-2">Backup Codes</h5>
+                            <p class="text-sm text-blue-700 mb-2">Save these codes in a secure place. Each code can be used once:</p>
+                            <div id="backupCodes" class="bg-white border border-blue-300 rounded p-3 font-mono text-sm space-y-1 max-h-32 overflow-y-auto"></div>
+                            <button onclick="copyBackupCodes()" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded">
+                                Copy Backup Codes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button onclick="show2FAStep2()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        I've Scanned the QR Code - Continue
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Verification -->
+            <div id="2faStep2" class="space-y-6 hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-800 mb-2">Step 4: Enter Verification Code</h4>
+                    <p class="text-blue-700">Enter the 6-digit code from your authenticator app to verify setup:</p>
+                </div>
+
+                <div class="text-center">
+                    <input type="text" id="verificationCode" placeholder="000000" 
+                           class="w-48 border-2 border-gray-300 rounded-lg px-4 py-3 text-center text-2xl tracking-widest font-mono focus:border-green-500 focus:ring-2 focus:ring-green-200" 
+                           maxlength="6" pattern="[0-9]{6}" inputmode="numeric">
+                    <p class="text-sm text-gray-500 mt-2">Enter the 6-digit code from your authenticator app</p>
+                </div>
+
+                <div class="flex space-x-3 justify-center">
+                    <button onclick="show2FAStep1()" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        ← Back
+                    </button>
+                    <button onclick="verify2FASetup()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        Verify & Enable 2FA
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button onclick="close2FAModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2FA Disable Confirmation Modal -->
+    <div id="disable2FAModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-red-800">Disable Two-Factor Authentication</h3>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Are you sure you want to disable two-factor authentication for your account?</p>
+            
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <h4 class="font-semibold text-red-800 mb-2">Security Warning:</h4>
+                <ul class="text-sm text-red-700 space-y-1">
+                    <li>• Your account will be less secure</li>
+                    <li>• No verification required for future logins</li>
+                    <li>• Increased risk of unauthorized access</li>
+                    <li>• This action cannot be undone immediately</li>
+                </ul>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeDisable2FAModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition duration-200">
+                    Cancel
+                </button>
+                <button onclick="confirmDisable2FA()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
+                    Disable 2FA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let currentUser = null;
+        let current2FASecret = null;
+        let current2FABackupCodes = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            
+            if (!userData || !token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(userData);
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role.toUpperCase();
+            
+            load2FAStatus();
+        });
+
+        // Load current 2FA status
+        async function load2FAStatus() {
+            try {
+                // Get updated user data to check 2FA status
+                const response = await fetch(`${API_BASE}/user/${currentUser.user_id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    currentUser = { ...currentUser, ...userData };
+                    updateUI();
+                }
+            } catch (error) {
+                console.error('Error loading 2FA status:', error);
+                // Fallback to stored user data
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            const statusElement = document.getElementById('currentStatus');
+            const enableBtn = document.getElementById('enable2FABtn');
+            const disableBtn = document.getElementById('disable2FABtn');
+
+            if (currentUser.two_factor_enabled) {
+                statusElement.innerHTML = `
+                    <span class="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-lg">
+                        ✅ 2FA Enabled
+                    </span>
+                    <p class="text-sm text-green-600 mt-2">Your account is protected</p>
+                `;
+                enableBtn.disabled = true;
+                enableBtn.innerHTML = '2FA Already Enabled';
+                enableBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                enableBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                disableBtn.disabled = false;
+            } else {
+                statusElement.innerHTML = `
+                    <span class="px-4 py-2 bg-red-100 text-red-800 rounded-full font-semibold text-lg">
+                        ❌ 2FA Disabled
+                    </span>
+                    <p class="text-sm text-red-600 mt-2">Enable 2FA for better security</p>
+                `;
+                enableBtn.disabled = false;
+                enableBtn.innerHTML = 'Enable 2FA';
+                enableBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                enableBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                disableBtn.disabled = true;
+                disableBtn.innerHTML = '2FA Not Enabled';
+                disableBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                disableBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            }
+        }
+
+        // Enable 2FA
+        async function enable2FA() {
+            try {
+                const response = await fetch(`${API_BASE}/enable-2fa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ email: currentUser.email })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to enable 2FA');
+                }
+
+                const data = await response.json();
+                current2FASecret = data.secret;
+                current2FABackupCodes = data.backupCodes;
+
+                // Show QR code and backup codes
+                document.getElementById('qrCodeImage').src = data.qrCodeUrl;
+                document.getElementById('secretKey').textContent = data.secret;
+                
+                const backupCodesHTML = data.backupCodes.map(code => 
+                    `<div>${code}</div>`
+                ).join('');
+                document.getElementById('backupCodes').innerHTML = backupCodesHTML;
+
+                // Show modal
+                show2FAStep1();
+                document.getElementById('enable2FAModal').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error enabling 2FA:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        // Show step 1 of 2FA setup
+        function show2FAStep1() {
+            document.getElementById('2faStep1').classList.remove('hidden');
+            document.getElementById('2faStep2').classList.add('hidden');
+        }
+
+        // Show step 2 of 2FA setup
+        function show2FAStep2() {
+            document.getElementById('2faStep1').classList.add('hidden');
+            document.getElementById('2faStep2').classList.remove('hidden');
+            document.getElementById('verificationCode').focus();
+        }
+
+        // Verify 2FA setup
+        async function verify2FASetup() {
+            const verificationCode = document.getElementById('verificationCode').value;
+            
+            if (!verificationCode || verificationCode.length !== 6) {
+                alert('Please enter a valid 6-digit code');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/verify-2fa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        token: verificationCode,
+                        secret: current2FASecret,
+                        backupCodes: current2FABackupCodes
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('🎉 2FA enabled successfully! Your account is now more secure.');
+                    close2FAModal();
+                    load2FAStatus(); // Refresh status
+                } else {
+                    alert(`❌ Verification failed: ${result.error}`);
+                }
+                
+            } catch (error) {
+                console.error('Error verifying 2FA:', error);
+                alert('❌ Error verifying 2FA code. Please try again.');
+            }
+        }
+
+        // Disable 2FA
+        function disable2FA() {
+            document.getElementById('disable2FAModal').classList.remove('hidden');
+        }
+
+        // Confirm disable 2FA
+        async function confirmDisable2FA() {
+            try {
+                const response = await fetch(`${API_BASE}/disable-2fa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ email: currentUser.email })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('2FA has been disabled for your account.');
+                    closeDisable2FAModal();
+                    load2FAStatus(); // Refresh status
+                } else {
+                    alert(`Failed to disable 2FA: ${result.error}`);
+                }
+                
+            } catch (error) {
+                console.error('Error disabling 2FA:', error);
+                alert('Error disabling 2FA. Please try again.');
+            }
+        }
+
+        // Utility functions
+        function copySecretKey() {
+            const secretKey = document.getElementById('secretKey').textContent;
+            navigator.clipboard.writeText(secretKey).then(() => {
+                alert('Secret key copied to clipboard!');
+            });
+        }
+
+        function copyBackupCodes() {
+            const backupCodes = current2FABackupCodes.join('\n');
+            navigator.clipboard.writeText(backupCodes).then(() => {
+                alert('Backup codes copied to clipboard!');
+            });
+        }
+
+        function close2FAModal() {
+            document.getElementById('enable2FAModal').classList.add('hidden');
+            current2FASecret = null;
+            current2FABackupCodes = [];
+            document.getElementById('verificationCode').value = '';
+            show2FAStep1(); // Reset to step 1
+        }
+
+        function closeDisable2FAModal() {
+            document.getElementById('disable2FAModal').classList.add('hidden');
+        }
+
+        function goBackToDashboard() {
+            const role = currentUser.role;
+            window.location.href = `${role}-dashboard.html`;
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+
+        // Enter key support for verification code
+        document.getElementById('verificationCode')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verify2FASetup();
+            }
+        });
+    </script>
+</body>
+</html>

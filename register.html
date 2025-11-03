@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - Richfield Library System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#0a1f44] flex flex-col min-h-screen text-white">
+  <header class="bg-blue-800 text-white px-6 py-6 flex items-center justify-center shadow-md">
+    <div class="flex items-center space-x-4">
+      <img src="https://cdn.briefly.co.za/images/720/6b4cbb0e53c53f0a.jpeg?v=1" alt="Richfield Library Logo" class="w-12 h-12 object-contain">
+      <h1 class="text-2xl font-bold">Richfield Library System - Register</h1>
+    </div>
+  </header>
+
+  <main class="flex-grow flex items-center justify-center px-4 py-8">
+    <div class="bg-[#1e2f5b] rounded-lg shadow-lg w-full max-w-2xl p-8">
+      <h2 class="text-2xl font-bold text-center mb-6">User Registration</h2>
+      <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div>
+          <label for="regName" class="block text-sm mb-1 font-semibold">Full Name</label>
+          <input type="text" id="regName" placeholder="Enter your full name" required
+            class="w-full px-4 py-3 border border-gray-400 rounded-lg bg-[#2c3e70] text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div>
+          <label for="regEmail" class="block text-sm mb-1 font-semibold">Email</label>
+          <input type="email" id="regEmail" placeholder="Enter your email" required
+            class="w-full px-4 py-3 border border-gray-400 rounded-lg bg-[#2c3e70] text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div>
+          <label for="regPassword" class="block text-sm mb-1 font-semibold">Password</label>
+          <input type="password" id="regPassword" placeholder="Create a password" required
+            class="w-full px-4 py-3 border border-gray-400 rounded-lg bg-[#2c3e70] text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div>
+          <label for="regPhone" class="block text-sm mb-1 font-semibold">Phone</label>
+          <input type="tel" id="regPhone" placeholder="Enter your phone number"
+            class="w-full px-4 py-3 border border-gray-400 rounded-lg bg-[#2c3e70] text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="regRole" class="block text-sm mb-1 font-semibold">Role</label>
+          <select id="regRole" required
+            class="w-full px-4 py-3 border border-gray-400 rounded-lg bg-[#2c3e70] text-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+            <option value="" disabled selected>-- Choose your role --</option>
+            <option value="student">Student</option>
+            <option value="librarian">Librarian</option>
+            <option value="lecturer">Lecturer</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <div id="courseField" class="hidden">
+          <label for="regCourse" class="block text-sm mb-1 font-semibold">Course</label>
+          <input type="text" id="regCourse" placeholder="Enter your course"
+            class="w-full px-4 py-3 border border-gray-400 rounded-lg bg-[#2c3e70] text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div id="departmentField" class="hidden">
+          <label for="regDepartment" class="block text-sm mb-1 font-semibold">Department</label>
+          <input type="text" id="regDepartment" placeholder="Enter your department"
+            class="w-full px-4 py-3 border border-gray-400 rounded-lg bg-[#2c3e70] text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+        </div>
+
+        <div class="md:col-span-2">
+          <button type="submit" id="registerButton"
+            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center space-x-2">
+            <span id="buttonText">Register</span>
+            <div id="loadingSpinner" class="hidden">
+              <i class="fas fa-spinner fa-spin"></i>
+            </div>
+          </button>
+        </div>
+      </form>
+
+      <!-- Success Message with Countdown -->
+      <div id="successMessage" class="mt-4 p-4 bg-green-600 text-white rounded-lg hidden transition-all duration-300">
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-check-circle text-xl"></i>
+          <div>
+            <p class="font-semibold" id="successText">Registration successful!</p>
+            <p class="text-sm opacity-90" id="countdownText">Redirecting to login in 3 seconds...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div id="errorMessage" class="mt-4 p-4 bg-red-600 text-white rounded-lg hidden transition-all duration-300">
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-exclamation-circle text-xl"></i>
+          <div>
+            <p class="font-semibold" id="errorText"></p>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-center mt-6">
+        <a href="index.html" class="text-blue-400 hover:underline transition">Already have an account? Login here</a>
+      </p>
+    </div>
+  </main>
+
+  <footer class="bg-[#0a1f44] text-gray-300 py-4 text-center mt-auto">
+    <p>&copy; 2025 Richfield Library System | Knowledge Nexus</p>
+  </footer>
+
+  <script>
+    const API_BASE = 'http://localhost:3000';
+
+    // Show/hide role-specific fields
+    document.getElementById('regRole').addEventListener('change', function() {
+      const role = this.value;
+      const courseField = document.getElementById('courseField');
+      const departmentField = document.getElementById('departmentField');
+      
+      if (role === 'student') {
+        courseField.classList.remove('hidden');
+        departmentField.classList.add('hidden');
+      } else {
+        courseField.classList.add('hidden');
+        departmentField.classList.remove('hidden');
+      }
+    });
+
+    // Set loading state
+    function setLoading(loading) {
+      const button = document.getElementById('registerButton');
+      const buttonText = document.getElementById('buttonText');
+      const spinner = document.getElementById('loadingSpinner');
+      
+      if (loading) {
+        button.disabled = true;
+        buttonText.textContent = 'Registering...';
+        spinner.classList.remove('hidden');
+        button.classList.add('opacity-75');
+      } else {
+        button.disabled = false;
+        buttonText.textContent = 'Register';
+        spinner.classList.add('hidden');
+        button.classList.remove('opacity-75');
+      }
+    }
+
+    // Show success message with countdown
+    function showSuccess(message, userId = null) {
+      const successDiv = document.getElementById('successMessage');
+      const successText = document.getElementById('successText');
+      const countdownText = document.getElementById('countdownText');
+      
+      // Hide error message if shown
+      hideError();
+      
+      // Set success message
+      let fullMessage = message;
+      if (userId) {
+        fullMessage += ` User ID: ${userId}`;
+      }
+      successText.textContent = fullMessage;
+      
+      // Show success message
+      successDiv.classList.remove('hidden', 'opacity-0');
+      successDiv.classList.add('opacity-100');
+      
+      // Start countdown
+      let seconds = 3;
+      countdownText.textContent = `Redirecting to login in ${seconds} seconds...`;
+      
+      const countdown = setInterval(() => {
+        seconds--;
+        if (seconds > 0) {
+          countdownText.textContent = `Redirecting to login in ${seconds} second${seconds !== 1 ? 's' : ''}...`;
+        } else {
+          clearInterval(countdown);
+          countdownText.textContent = 'Redirecting now...';
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 500);
+        }
+      }, 1000);
+    }
+
+    // Show error message
+    function showError(message) {
+      const errorDiv = document.getElementById('errorMessage');
+      const errorText = document.getElementById('errorText');
+      
+      // Hide success message if shown
+      hideSuccess();
+      
+      errorText.textContent = message;
+      errorDiv.classList.remove('hidden', 'opacity-0');
+      errorDiv.classList.add('opacity-100');
+    }
+
+    // Hide success message
+    function hideSuccess() {
+      const successDiv = document.getElementById('successMessage');
+      successDiv.classList.add('opacity-0');
+      setTimeout(() => {
+        successDiv.classList.add('hidden');
+      }, 300);
+    }
+
+    // Hide error message
+    function hideError() {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.classList.add('opacity-0');
+      setTimeout(() => {
+        errorDiv.classList.add('hidden');
+      }, 300);
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        name: document.getElementById('regName').value.trim(),
+        email: document.getElementById('regEmail').value.toLowerCase().trim(),
+        password: document.getElementById('regPassword').value,
+        phone: document.getElementById('regPhone').value.trim(),
+        role: document.getElementById('regRole').value,
+        course: document.getElementById('regCourse').value.trim(),
+        department: document.getElementById('regDepartment').value.trim()
+      };
+
+      // Validate required fields
+      if (!formData.name || !formData.email || !formData.password || !formData.role) {
+        showError('Please fill in all required fields');
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        showError('Please enter a valid email address');
+        return;
+      }
+
+      // Validate password length
+      if (formData.password.length < 6) {
+        showError('Password must be at least 6 characters long');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        hideError();
+        hideSuccess();
+
+        console.log('Sending registration request...', { 
+          ...formData, 
+          password: '***' 
+        });
+
+        const response = await fetch(`${API_BASE}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        console.log('Registration response:', data);
+
+        if (response.ok) {
+          showSuccess('Registration successful!', data.user?.user_id);
+          
+          // Clear form on successful registration
+          document.getElementById('registerForm').reset();
+          document.getElementById('courseField').classList.add('hidden');
+          document.getElementById('departmentField').classList.add('hidden');
+        } else {
+          showError(data.error || 'Registration failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          showError('Network error. Please check your connection and try again.');
+        } else {
+          showError('An unexpected error occurred. Please try again.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Add input animations
+    document.querySelectorAll('input, select').forEach(input => {
+      input.addEventListener('focus', function() {
+        this.classList.add('ring-2', 'ring-blue-400');
+      });
+      
+      input.addEventListener('blur', function() {
+        this.classList.remove('ring-2', 'ring-blue-400');
+      });
+    });
+
+    // Auto-hide messages after 10 seconds (for errors)
+    document.addEventListener('DOMContentLoaded', function() {
+      setInterval(() => {
+        const errorDiv = document.getElementById('errorMessage');
+        if (!errorDiv.classList.contains('hidden')) {
+          hideError();
+        }
+      }, 10000);
+    });
+  </script>
+</body>
+</html>
