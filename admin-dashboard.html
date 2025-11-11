@@ -1455,6 +1455,7 @@
         }
 
         // SEARCH LOANS FUNCTIONALITY
+        // SEARCH LOANS FUNCTIONALITY
         async function searchLoans() {
             const searchTerm = document.getElementById('loanSearch').value.trim();
 
@@ -1473,10 +1474,8 @@
                     throw new Error(`HTTP ${response.status}: Search failed`);
                 }
 
-                const data = await response.json();
-                console.log('Search results:', data);
-
-                const loans = data.loans || data || [];
+                const loans = await response.json();
+                console.log('Search results:', loans);
 
                 if (!Array.isArray(loans) || loans.length === 0) {
                     document.getElementById('loansTable').innerHTML = `
@@ -1488,6 +1487,7 @@
                             </svg>
                             <p class="text-lg font-medium">No Matching Loans</p>
                             <p class="text-sm mt-2">No loans found for "${searchTerm}"</p>
+                            <p class="text-xs text-gray-600 mt-1">Try searching by loan ID, user name, book title, or author</p>
                             <button onclick="loadLoans()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
                                 View All Loans
                             </button>
@@ -1511,16 +1511,21 @@
                         </svg>
                         <p class="font-medium">Search Error</p>
                         <p class="text-sm mt-1">${error.message}</p>
-                        <button onclick="searchLoans()" class="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
-                            Try Again
-                        </button>
+                        <p class="text-xs text-red-500 mt-2">Search endpoint may not be available yet</p>
+                        <div class="mt-3 space-x-2">
+                            <button onclick="searchLoans()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                                Try Again
+                            </button>
+                            <button onclick="loadLoans()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                                View All Loans
+                            </button>
+                        </div>
                     </div>
                 </td>
             </tr>
         `;
             }
         }
-
         function displayLoans(loans) {
             const loansHTML = loans.map(loan => {
                 // Handle different loan data structures
