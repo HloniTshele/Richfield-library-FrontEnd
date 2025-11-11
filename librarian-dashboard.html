@@ -247,37 +247,420 @@
         }
 
         async function updateStats() {
+    try {
+        console.log('🔄 Updating dashboard statistics...');
+        
+        // Use Promise.all to fetch all data concurrently for better performance
+        const [booksResponse, loansResponse, overdueResponse, reservationsResponse] = await Promise.all([
+            fetch(`${API_BASE}/books/all`),
+            fetch(`${API_BASE}/loans/status/filter?status=active`),
+            fetch(`${API_BASE}/loans/overdue/all`),
+            fetch(`${API_BASE}/reservations/pending`).catch(error => {
+                console.log('Reservations endpoint not available yet, using fallback');
+                return { ok: false }; // Graceful fallback
+            })
+        ]);
+
+        // Process books data
+        let availableBooks = 0;
+        if (booksResponse.ok) {
+            const booksData = await booksResponse.json();
+            const books = booksData.books || booksData || [];
+            availableBooks = books.filter(book => book.status === 'available').length;
+            console.log(`📚 Available books: ${availableBooks}`);
+        } else {
+            console.error('Failed to fetch books for stats');
+        }
+        document.getElementById('availableBooks').textContent = availableBooks;
+
+        // Process active loans data
+        let activeLoans = 0;
+        if (loansResponse.ok) {
+            const loansData = await loansResponse.json();
+            activeLoans = (loansData.loans ? loansData.loans.length : 0) || (Array.isArray(loansData) ? loansData.length : 0);
+            console.log(`📋 Active loans: ${activeLoans}`);
+        } else {
+            console.error('Failed to fetch active loans for stats');
+        }
+        document.getElementById('activeLoans').textContent = activeLoans;
+
+        // Process overdue loans data
+        let overdueBooks = 0;
+        if (overdueResponse.ok) {
+            const overdueData = await overdueResponse.json();
+            overdueBooks = (overdueData.loans ? overdueData.loans.length : 0) || (Array.isArray(overdueData) ? overdueData.length : 0);
+            console.log(`⚠️ Overdue books: ${overdueBooks}`);
+        } else {
+            console.error('Failed to fetch overdue loans for stats');
+        }
+        document.getElementById('overdueBooks').textContent = overdueBooks;
+
+        // Process pending reservations data
+        let pendingReservations = 0;
+        if (reservationsResponse && reservationsResponse.ok) {
+            const reservationsData = await reservationsResponse.json();
+            pendingReservations = reservationsData.count || 
+                                (reservationsData.reservations ? reservationsData.reservations.length : 0) || 
+                                (Array.isArray(reservationsData) ? reservationsData.length : 0);
+            console.log(`⏳ Pending reservations: ${pendingReservations}`);
+        } else {
+            // Fallback: Try to get all reservations and filter for pending
             try {
-                // Load all books
-                const booksResponse = await fetch(`${API_BASE}/books/all`);
-                const booksData = await booksResponse.json();
-                const books = booksData.books || booksData;
-                const availableBooks = books.filter(book => book.status === 'available').length;
-                document.getElementById('availableBooks').textContent = availableBooks;
-
-                // Load active loans
-                const loansResponse = await fetch(`${API_BASE}/loans/status/filter?status=active`);
-                const loansData = await loansResponse.json();
-                const activeLoans = (loansData.loans ? loansData.loans.length : 0) || (Array.isArray(loansData) ? loansData.length : 0);
-                document.getElementById('activeLoans').textContent = activeLoans;
-
-                // Load overdue books
-                const overdueResponse = await fetch(`${API_BASE}/loans/overdue/all`);
-                const overdueData = await overdueResponse.json();
-                const overdueBooks = (overdueData.loans ? overdueData.loans.length : 0) || (Array.isArray(overdueData) ? overdueData.length : 0);
-                document.getElementById('overdueBooks').textContent = overdueBooks;
-
-                // Pending reservations
-                document.getElementById('pendingReservations').textContent = '0';
-                
-                console.log('Stats updated:', { availableBooks, activeLoans, overdueBooks });
-                
-            } catch (error) {
-                console.error('Error updating stats:', error);
+                const allReservationsResponse = await fetch(`${API_BASE}/reservations/all`);
+                if (allReservationsResponse.ok) {
+                    const allReservationsData = await allReservationsResponse.json();
+                    const allReservations = allReservationsData.reservations || allReservationsData || [];
+                    pendingReservations = allReservations.filter(res => res.status === 'pending').length;
+                    console.log(`⏳ Pending reservations (fallback): ${pendingReservations}`);
+                }
+            } catch (fallbackError) {
+                console.log('Reservations endpoint not available, setting to 0');
+                pendingReservations = 0;
             }
         }
+        document.getElementById('pendingReservations').textContent = pendingReservations;
 
-        async function searchBooks() {
+        console.log('✅ Stats updated successfully:', { 
+            availableBooks, 
+            activeLoans, 
+            overdueBooks, 
+            pendingReservations 
+        });
+
+    } catch (error) {
+        console.error('❌ Error updating stats:', error);
+        
+        // Set fallback values on error
+        document.getElementById('availableBooks').textContent = '0';
+        document.getElementById('activeLoans').textContent = '0';
+        document.getElementById('overdueBooks').textContent = '0';
+        document.getElementById('pendingReservations').textContent = '0';
+        
+        // Show error notification (optional)
+        showStatsErrorNotification();
+    }
+}
+
+// Optional: Helper function to show error notification
+function showStatsErrorNotification() {
+    const statsContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-4.gap-4.mb-6');
+    if (statsContainer && !document.getElementById('stats-error-notification')) {
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'stats-error-notification';
+        errorDiv.className = 'col-span-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-sm';
+        errorDiv.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Stats may not be up to date. <button onclick="updateStats()" class="underline hover:text-yellow-900">Try again</button></span>
+            </div>
+        `;
+        statsContainer.parentNode.insertBefore(errorDiv, statsContainer.nextSibling);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 5000);
+    }
+}
+
+//Auto-refresh stats every 30 seconds
+function startStatsAutoRefresh() {
+    setInterval(updateStats, 30000); // 30 seconds
+}
+
+// Call this when the dashboard loads
+document.addEventListener('DOMContentLoaded', function() {
+    const userData = localStorage.getItem('user');
+    if (!userData) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    currentUser = JSON.parse(userData);
+    if (currentUser.role !== 'librarian') {
+        window.location.href = `${currentUser.role}-dashboard.html`;
+        return;
+    }
+
+    document.getElementById('librarianName').textContent = currentUser.name;
+    
+    // Initialize the dashboard
+    showTab('books');
+    updateStats();
+    
+    // Start auto-refresh for stats (every 30 seconds)
+    startStatsAutoRefresh();
+    
+    // Optional: Add periodic data refresh for better UX
+    startDataAutoRefresh();
+});
+
+// Auto-refresh functions
+function startStatsAutoRefresh() {
+    // Refresh stats every 30 seconds
+    setInterval(updateStats, 30000);
+}
+
+function startDataAutoRefresh() {
+    // Refresh current tab data every 2 minutes for better performance
+    setInterval(() => {
+        const activeTab = document.querySelector('.tab-button.border-purple-500');
+        if (activeTab) {
+            const tabName = activeTab.getAttribute('data-tab');
+            switch(tabName) {
+                case 'books':
+                    loadBooks();
+                    break;
+                case 'loans':
+                    loadLoans();
+                    break;
+                case 'reservations':
+                    loadReservations();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+            }
+        }
+    }, 120000); // 2 minutes
+}
+
+// Enhanced updateStats function with auto-refresh capability
+async function updateStats() {
+    try {
+        console.log('🔄 Updating dashboard statistics...');
+        
+        // Show loading state in stats (optional visual feedback)
+        showStatsLoadingState();
+        
+        const [booksResponse, loansResponse, overdueResponse, reservationsResponse] = await Promise.all([
+            fetch(`${API_BASE}/books/all`),
+            fetch(`${API_BASE}/loans/status/filter?status=active`),
+            fetch(`${API_BASE}/loans/overdue/all`),
+            fetch(`${API_BASE}/reservations/pending`).catch(error => {
+                console.log('Reservations endpoint not available yet, using fallback');
+                return { ok: false };
+            })
+        ]);
+
+        // Process books data
+        let availableBooks = 0;
+        if (booksResponse.ok) {
+            const booksData = await booksResponse.json();
+            const books = booksData.books || booksData || [];
+            availableBooks = books.filter(book => book.status === 'available').length;
+        }
+        document.getElementById('availableBooks').textContent = availableBooks;
+
+        // Process active loans data
+        let activeLoans = 0;
+        if (loansResponse.ok) {
+            const loansData = await loansResponse.json();
+            activeLoans = (loansData.loans ? loansData.loans.length : 0) || (Array.isArray(loansData) ? loansData.length : 0);
+        }
+        document.getElementById('activeLoans').textContent = activeLoans;
+
+        // Process overdue loans data
+        let overdueBooks = 0;
+        if (overdueResponse.ok) {
+            const overdueData = await overdueResponse.json();
+            overdueBooks = (overdueData.loans ? overdueData.loans.length : 0) || (Array.isArray(overdueData) ? overdueData.length : 0);
+        }
+        document.getElementById('overdueBooks').textContent = overdueBooks;
+
+        // Process pending reservations data
+        let pendingReservations = 0;
+        if (reservationsResponse && reservationsResponse.ok) {
+            const reservationsData = await reservationsResponse.json();
+            pendingReservations = reservationsData.count || 
+                                (reservationsData.reservations ? reservationsData.reservations.length : 0) || 
+                                (Array.isArray(reservationsData) ? reservationsData.length : 0);
+        } else {
+            // Fallback for reservations
+            try {
+                const allReservationsResponse = await fetch(`${API_BASE}/reservations/all`);
+                if (allReservationsResponse.ok) {
+                    const allReservationsData = await allReservationsResponse.json();
+                    const allReservations = allReservationsData.reservations || allReservationsData || [];
+                    pendingReservations = allReservations.filter(res => res.status === 'pending').length;
+                }
+            } catch (fallbackError) {
+                pendingReservations = 0;
+            }
+        }
+        document.getElementById('pendingReservations').textContent = pendingReservations;
+
+        // Remove loading state
+        removeStatsLoadingState();
+        
+        console.log('✅ Stats updated:', { availableBooks, activeLoans, overdueBooks, pendingReservations });
+
+    } catch (error) {
+        console.error('❌ Error updating stats:', error);
+        
+        // Set fallback values and show error state
+        document.getElementById('availableBooks').textContent = '0';
+        document.getElementById('activeLoans').textContent = '0';
+        document.getElementById('overdueBooks').textContent = '0';
+        document.getElementById('pendingReservations').textContent = '0';
+        
+        removeStatsLoadingState();
+        showStatsErrorNotification();
+    }
+}
+
+// Visual feedback functions for stats loading
+function showStatsLoadingState() {
+    const statBoxes = document.querySelectorAll('.bg-white.rounded-lg.shadow.p-4');
+    statBoxes.forEach(box => {
+        const valueElement = box.querySelector('p.text-2xl');
+        if (valueElement) {
+            valueElement.innerHTML = '<div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-current"></div>';
+        }
+    });
+}
+
+function removeStatsLoadingState() {
+    const statBoxes = document.querySelectorAll('.bg-white.rounded-lg.shadow.p-4');
+    statBoxes.forEach(box => {
+        const valueElement = box.querySelector('p.text-2xl');
+        if (valueElement && valueElement.innerHTML.includes('animate-spin')) {
+            // The actual values will be set by updateStats
+            // This just removes the spinner visual
+        }
+    });
+}
+
+function showStatsErrorNotification() {
+    const statsContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-4.gap-4.mb-6');
+    if (statsContainer && !document.getElementById('stats-error-notification')) {
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'stats-error-notification';
+        errorDiv.className = 'col-span-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-sm';
+        errorDiv.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Stats may not be up to date</span>
+                </div>
+                <button onclick="updateStats()" class="text-yellow-700 hover:text-yellow-900 underline text-xs">
+                    Refresh
+                </button>
+            </div>
+        `;
+        statsContainer.parentNode.insertBefore(errorDiv, statsContainer.nextSibling);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 5000);
+    }
+}
+
+// Manual refresh function that can be called from anywhere
+function refreshDashboard() {
+    updateStats();
+    
+    const activeTab = document.querySelector('.tab-button.border-purple-500');
+    if (activeTab) {
+        const tabName = activeTab.getAttribute('data-tab');
+        switch(tabName) {
+            case 'books':
+                loadBooks();
+                break;
+            case 'loans':
+                loadLoans();
+                break;
+            case 'reservations':
+                loadReservations();
+                break;
+            case 'notifications':
+                loadNotifications();
+                break;
+        }
+    }
+    
+    // Show refresh confirmation
+    showRefreshConfirmation();
+}
+
+function showRefreshConfirmation() {
+    // Create a temporary success message
+    const existingMessage = document.getElementById('refresh-success-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'refresh-success-message';
+    messageDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    messageDiv.textContent = 'Dashboard refreshed!';
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove after 2 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }, 2000);
+}
+
+// Add refresh button to the header (optional)
+function addRefreshButton() {
+    const header = document.querySelector('header .flex.items-center.space-x-4');
+    if (header && !document.getElementById('refreshDashboardBtn')) {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.id = 'refreshDashboardBtn';
+        refreshBtn.className = 'bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg transition text-sm flex items-center';
+        refreshBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Refresh
+        `;
+        refreshBtn.onclick = refreshDashboard;
+        
+        header.appendChild(refreshBtn);
+    }
+}
+
+// Update your existing DOMContentLoaded to include the refresh button
+document.addEventListener('DOMContentLoaded', function() {
+    const userData = localStorage.getItem('user');
+    if (!userData) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    currentUser = JSON.parse(userData);
+    if (currentUser.role !== 'librarian') {
+        window.location.href = `${currentUser.role}-dashboard.html`;
+        return;
+    }
+
+    document.getElementById('librarianName').textContent = currentUser.name;
+    
+    // Add refresh button to header
+    addRefreshButton();
+    
+    // Initialize the dashboard
+    showTab('books');
+    updateStats();
+    
+    // Start auto-refresh for stats
+    startStatsAutoRefresh();
+    startDataAutoRefresh();
+});      
+async function searchBooks() {
             const searchTerm = document.getElementById('bookSearch').value;
             if (!searchTerm) {
                 loadBooks();
@@ -1022,14 +1405,224 @@ Check browser console for detailed information.`;
         }
 
         // RESERVATIONS FUNCTION (placeholder)
-        async function loadReservations() {
-            document.getElementById('reservationsList').innerHTML = `
-                <div class="text-center py-4 text-gray-500">
-                    Reservations functionality coming soon...
-                </div>
-            `;
+        // RESERVATIONS FUNCTION
+async function loadReservations() {
+    try {
+        console.log('📋 Loading reservations...');
+        
+        document.getElementById('reservationsList').innerHTML = `
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                <p class="text-gray-600 mt-2">Loading reservations...</p>
+            </div>
+        `;
+
+        const response = await fetch(`${API_BASE}/reservations/pending`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch reservations');
         }
 
+        console.log('Reservations data:', data);
+
+        const reservations = data.reservations || [];
+        
+        if (reservations.length === 0) {
+            document.getElementById('reservationsList').innerHTML = `
+                <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <p class="text-lg font-medium">No Pending Reservations</p>
+                    <p class="text-sm mt-2">All reservations have been processed.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const reservationsHTML = reservations.map(reservation => {
+            const reservationDate = new Date(reservation.reservation_date);
+            const expiryDate = new Date(reservation.expiry_date);
+            const isExpired = expiryDate < new Date();
+            
+            // Safely escape reservation_id for JavaScript
+            const safeReservationId = reservation.reservation_id ? reservation.reservation_id.replace(/'/g, "\\'") : '';
+
+            return `
+                <div class="border-l-4 ${isExpired ? 'border-red-500' : 'border-orange-500'} bg-white p-4 rounded-r-lg shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    isExpired ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
+                                } mr-2">
+                                    ${isExpired ? 'EXPIRED' : 'PENDING'}
+                                </span>
+                                <span class="text-xs text-gray-500">Reservation ID: ${reservation.reservation_id}</span>
+                            </div>
+                            
+                            <h3 class="font-semibold text-gray-800 text-lg">${reservation.book_title}</h3>
+                            <p class="text-sm text-gray-600">by ${reservation.book_author}</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 text-sm">
+                                <div>
+                                    <span class="font-medium text-gray-700">User Information:</span>
+                                    <p class="text-gray-600">${reservation.user_name} (${reservation.user_role})</p>
+                                    <p class="text-gray-500 text-xs">${reservation.user_email}</p>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-700">Dates:</span>
+                                    <p class="text-gray-600">Reserved: ${reservationDate.toLocaleDateString('en-ZA')}</p>
+                                    <p class="text-gray-600 ${isExpired ? 'text-red-600 font-semibold' : ''}">
+                                        Expires: ${expiryDate.toLocaleDateString('en-ZA')}
+                                        ${isExpired ? ' ⚠️' : ''}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col space-y-2 ml-4">
+                            ${!isExpired ? `
+                                <button onclick="confirmReservation('${safeReservationId}')" 
+                                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
+                                    ✅ Confirm
+                                </button>
+                                <button onclick="cancelReservation('${safeReservationId}')" 
+                                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
+                                    ❌ Cancel
+                                </button>
+                            ` : `
+                                <button onclick="deleteReservation('${safeReservationId}')" 
+                                        class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
+                                    🗑️ Delete
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        document.getElementById('reservationsList').innerHTML = reservationsHTML;
+        
+        // Update stats with reservation count
+        document.getElementById('pendingReservations').textContent = reservations.length;
+        
+    } catch (error) {
+        console.error('Error loading reservations:', error);
+        document.getElementById('reservationsList').innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <strong>Error loading reservations</strong>
+                </div>
+                <p class="text-sm mt-1">${error.message}</p>
+                <button onclick="loadReservations()" class="mt-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                    Try Again
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Reservation Action Functions
+async function confirmReservation(reservationId) {
+    if (!confirm('Are you sure you want to confirm this reservation?\n\nThis will create a loan for the user and mark the book as borrowed.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/reservations/update-status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                reservation_id: reservationId,
+                status: 'confirmed'
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Reservation confirmed successfully! A loan has been created for the user.');
+            loadReservations();
+            updateStats();
+        } else {
+            alert(`❌ Error confirming reservation: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error confirming reservation:', error);
+        alert('❌ Error confirming reservation. Please try again.');
+    }
+}
+
+async function cancelReservation(reservationId) {
+    if (!confirm('Are you sure you want to cancel this reservation?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/reservations/update-status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                reservation_id: reservationId,
+                status: 'cancelled'
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Reservation cancelled successfully!');
+            loadReservations();
+            updateStats();
+        } else {
+            alert(`❌ Error cancelling reservation: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error cancelling reservation:', error);
+        alert('❌ Error cancelling reservation. Please try again.');
+    }
+}
+
+async function deleteReservation(reservationId) {
+    if (!confirm('Are you sure you want to delete this reservation?\n\nThis action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/reservations/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                reservation_id: reservationId
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Reservation deleted successfully!');
+            loadReservations();
+            updateStats();
+        } else {
+            alert(`❌ Error deleting reservation: ${data.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error deleting reservation:', error);
+        alert('❌ Error deleting reservation. Please try again.');
+    }
+}
         // BOOK STATUS UPDATE (placeholder)
         async function updateBookStatus(bookId) {
             const newStatus = prompt('Enter new status (available/borrowed/maintenance):', 'available');
