@@ -617,70 +617,83 @@
                 `;
             }
         }
-
         function generateNotificationsFromLoans(loans, user) {
-            const notifications = [];
-            const now = new Date();
+    const notifications = [];
+    const now = new Date();
+    
+    loans.forEach(loan => {
+        if (!loan.return_date) {
+            const dueDate = new Date(loan.due_date);
+            const daysUntilDue = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+            const bookTitle = loan.book_title || loan.title || 'Unknown Book';
             
-            loans.forEach(loan => {
-                if (!loan.return_date) {
-                    const dueDate = new Date(loan.due_date);
-                    const daysUntilDue = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
-                    const bookTitle = loan.book_title || loan.title || 'Unknown Book';
-                    
-                    // Overdue notification
-                    if (dueDate < now) {
-                        const daysOverdue = Math.ceil((now - dueDate) / (1000 * 60 * 60 * 24));
-                        notifications.push({
-                            id: `overdue-${loan.loan_id}`,
-                            type: 'overdue',
-                            title: 'Book Overdue',
-                            message: `Your book "${bookTitle}" is ${daysOverdue} day(s) overdue. Please return it as soon as possible to avoid penalties.`,
-                            bookTitle: bookTitle,
-                            dueDate: loan.due_date,
-                            date: dueDate.toISOString(),
-                            read: false,
-                            priority: 'high'
-                        });
-                    }
-                    // Due soon notification (within 3 days)
-                    else if (daysUntilDue <= 3 && daysUntilDue > 0) {
-                        notifications.push({
-                            id: `due-soon-${loan.loan_id}`,
-                            type: 'due_soon',
-                            title: 'Book Due Soon',
-                            message: `Your book "${bookTitle}" is due in ${daysUntilDue} day(s). Please remember to return it on time.`,
-                            bookTitle: bookTitle,
-                            dueDate: loan.due_date,
-                            date: now.toISOString(),
-                            read: false,
-                            priority: 'medium'
-                        });
-                    }
-                }
-            });
-            
-            // Add some general notifications
-            notifications.push({
-                id: 'welcome-1',
-                type: 'general',
-                title: 'Welcome to Richfield Library',
-                message: 'Thank you for using our library system. Remember to return books on time to avoid late fees.',
-                date: new Date().toISOString(),
-                read: true,
-                priority: 'low'
-            });
-            
-            // Sort by priority and date (unread first, then by priority and date)
-            return notifications.sort((a, b) => {
-                if (a.read !== b.read) return a.read ? 1 : -1;
-                if (a.priority !== b.priority) {
-                    const priorityOrder = { high: 0, medium: 1, low: 2 };
-                    return priorityOrder[a.priority] - priorityOrder[b.priority];
-                }
-                return new Date(b.date) - new Date(a.date);
-            });
+            // Overdue notification
+            if (dueDate < now) {
+                const daysOverdue = Math.ceil((now - dueDate) / (1000 * 60 * 60 * 24));
+                notifications.push({
+                    id: `overdue-${loan.loan_id}`,
+                    type: 'overdue',
+                    title: 'Book Overdue',
+                    message: `Your book "${bookTitle}" is ${daysOverdue} day(s) overdue. Please return it as soon as possible to avoid penalties.`,
+                    bookTitle: bookTitle,
+                    dueDate: loan.due_date,
+                    date: dueDate.toISOString(),
+                    read: false,
+                    priority: 'high'
+                });
+            }
+            // Due soon notification (within 1 day) - Changed from 3 days to 1 day
+            else if (daysUntilDue <= 1 && daysUntilDue > 0) {
+                notifications.push({
+                    id: `due-soon-${loan.loan_id}`,
+                    type: 'due_soon',
+                    title: 'Book Due Tomorrow',
+                    message: `Your book "${bookTitle}" is due tomorrow. Please remember to return it on time.`,
+                    bookTitle: bookTitle,
+                    dueDate: loan.due_date,
+                    date: now.toISOString(),
+                    read: false,
+                    priority: 'medium'
+                });
+            }
+            // Due in 2-3 days notification
+            else if (daysUntilDue <= 3 && daysUntilDue > 1) {
+                notifications.push({
+                    id: `due-soon-${loan.loan_id}-2`,
+                    type: 'due_soon',
+                    title: 'Book Due Soon',
+                    message: `Your book "${bookTitle}" is due in ${daysUntilDue} days. Please plan to return it soon.`,
+                    bookTitle: bookTitle,
+                    dueDate: loan.due_date,
+                    date: now.toISOString(),
+                    read: false,
+                    priority: 'medium'
+                });
+            }
         }
+    });
+    
+    // Add some general notifications
+    notifications.push({
+        id: 'welcome-1',
+        type: 'general',
+        title: 'Welcome to Richfield Library',
+        message: 'Thank you for using our library system. Remember to return books within 3 days to avoid late fees.',
+        date: new Date().toISOString(),
+        read: true,
+        priority: 'low'
+    });
+    
+    // Sort by priority and date (unread first, then by priority and date)
+    return notifications.sort((a, b) => {
+        if (a.read !== b.read) return a.read ? 1 : -1;
+        if (a.priority !== b.priority) {
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+        }
+        return new Date(b.date) - new Date(a.date);
+    });
+}
 
         function updateNotificationCounts(notifications) {
             const total = notifications.length;
@@ -870,10 +883,10 @@
     try {
         console.log('Creating loan for book:', bookId);
         
-        // Calculate dates: loan date = today, due date = today + 14 days
+        // Calculate dates: loan date = today, due date = today + 3 days
         const loanDate = new Date().toISOString().split('T')[0];
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 14);
+        dueDate.setDate(dueDate.getDate() + 3); // Changed from 14 to 3 days
         const dueDateString = dueDate.toISOString().split('T')[0];
 
         // Use both admin_id (for backend validation) and created_by (for database)
@@ -901,7 +914,7 @@
         console.log('Loan creation response:', data);
 
         if (response.ok) {
-            alert(`✅ Book borrowed successfully!\n\n📅 Due Date: ${dueDate.toLocaleDateString('en-ZA')}\n\nPlease return the book by the due date to avoid late fees.`);
+            alert(`✅ Book borrowed successfully!\n\n📅 Due Date: ${dueDate.toLocaleDateString('en-ZA')}\n\nPlease return the book in 3 days to avoid late fees.`);
             // Reload all data
             loadMyLoans();
             loadAvailableBooks();
@@ -915,7 +928,7 @@
         alert('❌ Error borrowing book. Please try again.');
     }
 }
-        async function reserveBook(bookId) {
+    async function reserveBook(bookId) {
             if (!bookId) {
                 alert('Error: Invalid book ID');
                 return;
