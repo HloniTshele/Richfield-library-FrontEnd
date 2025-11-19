@@ -753,6 +753,7 @@
         }
 
         // DELETE BOOK FUNCTIONALITY
+        
         async function deleteBook(bookId) {
             if (!confirm(`Are you sure you want to delete book ${bookId}? This action cannot be undone.`)) {
                 return;
@@ -776,14 +777,18 @@
                     alert(`Book deleted successfully!`);
                     loadBooks(); // Refresh the book list
                 } else {
-                    alert(`Error deleting book: ${result.error || 'Unknown error'}`);
+                    // Handle specific error for loaned books
+                    if (result.error && result.error.includes('currently loaned')) {
+                        alert(`Cannot delete book: This book is currently loaned out. Please wait until it's returned.`);
+                    } else {
+                        alert(`Error deleting book: ${result.error || 'Unknown error'}`);
+                    }
                 }
             } catch (error) {
                 console.error('Error deleting book:', error);
                 alert('Error deleting book. Please try again.');
             }
         }
-
         // SAVE BOOK FUNCTIONALITY
         async function saveBook(event) {
             event.preventDefault();

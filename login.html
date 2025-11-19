@@ -107,20 +107,20 @@
           email: is2FAMode ? currentEmail : email, 
           has2FACode: !!twofaCode,
           is2FAMode,
-          currentEmail // Debug current email state
+          currentEmail
         });
 
         let response;
         let requestBody;
         
         if (is2FAMode && twofaCode) {
-          // 2FA verification step - FIXED: Use the stored currentEmail
+          // 2FA verification step
           if (!currentEmail) {
             throw new Error('Email information lost during 2FA process. Please start over.');
           }
           
           requestBody = { 
-            email: currentEmail, // Use the stored email, not the disabled input
+            email: currentEmail,
             token: twofaCode 
           };
           
@@ -136,7 +136,7 @@
           });
         } else {
           // Regular login step
-          currentEmail = email.toLowerCase(); // Store email for 2FA step
+          currentEmail = email.toLowerCase();
           requestBody = { email, password };
           console.log('Calling signin endpoint:', `${API_BASE}/signin`);
           response = await fetch(`${API_BASE}/signin`, {
@@ -172,7 +172,6 @@
             console.log('2FA verification successful, processing login...');
             
             if (data.user) {
-              // Add token to user data for storage
               const userWithToken = {
                 ...data.user,
                 token: data.token || 'logged-in'
@@ -185,7 +184,6 @@
           } else {
             // Check if 2FA is required
             if (data.requires2FA || data.message?.includes('2FA')) {
-              // Ensure we have the email for 2FA step
               if (!currentEmail) {
                 currentEmail = data.email || email;
               }
@@ -199,18 +197,44 @@
             }
           }
         } else {
-          throw new Error(data.error || data.message || `Login failed (Status: ${response.status})`);
+          // SIMPLIFIED ERROR HANDLING - Show alert for any login failure
+          const errorMessage = data.error || data.message || `Login failed (Status: ${response.status})`;
+          
+          // Check if it's a password-related error
+          const lowerErrorMessage = errorMessage.toLowerCase();
+          if (lowerErrorMessage.includes('password') || 
+              lowerErrorMessage.includes('incorrect') ||
+              lowerErrorMessage.includes('invalid credentials') ||
+              lowerErrorMessage.includes('wrong password') ||
+              lowerErrorMessage.includes('invalid password') ||
+              response.status === 401) {
+            // Show alert for wrong credentials
+            alert('Wrong username or password');
+            throw new Error('Wrong username or password');
+          } else {
+            throw new Error(errorMessage);
+          }
         }
       } catch (error) {
         console.error('Login error:', error);
-        showMessage(error.message, 'error');
+        
+        // Show alert for wrong credentials
+        if (error.message === 'Wrong username or password') {
+          alert('Wrong username or password');
+          // Clear password field and focus on it
+          document.getElementById('password').value = '';
+          document.getElementById('password').focus();
+        } else {
+          // For other errors, show the message in the form
+          showMessage(error.message, 'error');
+        }
         
         // If 2FA verification fails, stay in 2FA mode but clear the code
-        if (is2FAMode) {
+        if (is2FAMode && error.message !== 'Wrong username or password') {
           document.getElementById('twofaCode').value = '';
           document.getElementById('twofaCode').focus();
-        } else {
-          // Reset on initial login failure
+        } else if (error.message === 'Wrong username or password') {
+          // Reset on credential errors
           resetLoginForm();
         }
       } finally {
@@ -332,7 +356,6 @@
       if (user) {
         try {
           const userData = JSON.parse(user);
-          // Clear if it's a 2FA pending object or invalid user data
           if ((userData.requires2FA && !userData.role) || !userData.role) {
             console.log('Found incomplete or invalid login, clearing...');
             localStorage.removeItem('user');
@@ -381,7 +404,6 @@
       location.reload();
     };
 
-    // Debug current state
     window.debugState = function() {
       console.log('Current state:', {
         currentEmail,

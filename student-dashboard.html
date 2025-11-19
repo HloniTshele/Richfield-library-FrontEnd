@@ -1150,7 +1150,7 @@
                 document.getElementById('noNotifications').classList.add('hidden');
 
                 // Get loans data for notifications
-                const loansResponse = await fetch(`${API_BASE}/loans/${currentUser.user_id}`);
+                const loansResponse = await fetch(`${API_BASE}/user-loans/${currentUser.user_id}`);
                 if (!loansResponse.ok) {
                     throw new Error('Failed to fetch loans for notifications');
                 }
